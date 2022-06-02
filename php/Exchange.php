@@ -1880,7 +1880,7 @@ class Exchange {
         $since_is_set = isset($since);
         if ($since_is_set) {
             foreach ($array as $entry) {
-                if ($entry[$key] > $since) {
+                if ($entry[$key] >= $since) {
                     $result[] = $entry;
                 }
             }
