@@ -945,17 +945,21 @@ module.exports = class Exchange {
     }
 
     safeBalance (balance) {
-        const balances = this.omit (balance, [ 'info', 'timestamp', 'datetime', 'free', 'used', 'total' ]);
+        const balances = this.omit (balance, [ 'info', 'timestamp', 'datetime', 'free', 'used', 'total', 'borrowed', 'interest' ]);
         const codes = Object.keys (balances);
         balance['free'] = {};
         balance['used'] = {};
         balance['total'] = {};
+        balance['borrowed'] = {};
+        balance['interest'] = {};
         const debtBalance = {};
         for (let i = 0; i < codes.length; i++) {
             const code = codes[i];
             let total = this.safeString (balance[code], 'total');
             let free = this.safeString (balance[code], 'free');
             let used = this.safeString (balance[code], 'used');
+            let borrowed = this.safeString (balance[code], 'borrowed');
+            let interest = this.safeString (balance[code], 'interest');
             const debt = this.safeString (balance[code], 'debt');
             if ((total === undefined) && (free !== undefined) && (used !== undefined)) {
                 total = Precise.stringAdd (free, used);
@@ -969,9 +973,13 @@ module.exports = class Exchange {
             balance[code]['free'] = this.parseNumber (free);
             balance[code]['used'] = this.parseNumber (used);
             balance[code]['total'] = this.parseNumber (total);
+            balance[code]['borrowed'] = this.parseNumber (borrowed);
+            balance[code]['interest'] = this.parseNumber (interest);
             balance['free'][code] = balance[code]['free'];
             balance['used'][code] = balance[code]['used'];
             balance['total'][code] = balance[code]['total'];
+            balance['borrowed'][code] = balance[code]['borrowed'];
+            balance['interest'][code] = balance[code]['interest'];
             if (debt !== undefined) {
                 balance[code]['debt'] = this.parseNumber (debt);
                 debtBalance[code] = balance[code]['debt'];

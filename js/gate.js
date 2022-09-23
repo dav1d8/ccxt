@@ -2178,6 +2178,8 @@ module.exports = class gate extends Exchange {
         account['used'] = this.safeString2 (entry, 'freeze', 'locked');
         account['free'] = this.safeString (entry, 'available');
         account['total'] = this.safeString (entry, 'total');
+        account['borrowed'] = this.safeString (entry, 'borrowed', '0');
+        account['interest'] = this.safeString (entry, 'interest', '0');
         if ('borrowed' in entry) {
             account['debt'] = this.safeString (entry, 'borrowed');
         }

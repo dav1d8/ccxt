@@ -1915,6 +1915,8 @@ module.exports = class binance extends Exchange {
         const interest = this.safeString (entry, 'interest');
         const debt = this.safeString (entry, 'borrowed');
         account['debt'] = Precise.stringAdd (debt, interest);
+        account['borrowed'] = this.safeString (entry, 'borrowed', '0');
+        account['interest'] = this.safeString (entry, 'interest', '0');
         return account;
     }
 
@@ -1935,6 +1937,8 @@ module.exports = class binance extends Exchange {
                 const account = this.account ();
                 account['free'] = this.safeString (balance, 'free');
                 account['used'] = this.safeString (balance, 'locked');
+                account['borrowed'] = this.safeString (balance, 'borrowed', '0');
+                account['interest'] = this.safeString (balance, 'interest', '0');
                 if (cross) {
                     const debt = this.safeString (balance, 'borrowed');
                     const interest = this.safeString (balance, 'interest');
