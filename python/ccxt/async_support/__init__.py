@@ -4,7 +4,7 @@
 
 # -----------------------------------------------------------------------------
 
-__version__ = '1.84.78'
+__version__ = '1.92.42'
 
 # -----------------------------------------------------------------------------
 
@@ -88,6 +88,7 @@ from ccxt.async_support.bl3p import bl3p                                  # noqa
 from ccxt.async_support.blockchaincom import blockchaincom                # noqa: F401
 from ccxt.async_support.btcalpha import btcalpha                          # noqa: F401
 from ccxt.async_support.btcbox import btcbox                              # noqa: F401
+from ccxt.async_support.btcex import btcex                                # noqa: F401
 from ccxt.async_support.btcmarkets import btcmarkets                      # noqa: F401
 from ccxt.async_support.btctradeua import btctradeua                      # noqa: F401
 from ccxt.async_support.btcturk import btcturk                            # noqa: F401
@@ -103,7 +104,6 @@ from ccxt.async_support.coinbasepro import coinbasepro                    # noqa
 from ccxt.async_support.coincheck import coincheck                        # noqa: F401
 from ccxt.async_support.coinex import coinex                              # noqa: F401
 from ccxt.async_support.coinfalcon import coinfalcon                      # noqa: F401
-from ccxt.async_support.coinflex import coinflex                          # noqa: F401
 from ccxt.async_support.coinmate import coinmate                          # noqa: F401
 from ccxt.async_support.coinone import coinone                            # noqa: F401
 from ccxt.async_support.coinspot import coinspot                          # noqa: F401
@@ -119,6 +119,7 @@ from ccxt.async_support.flowbtc import flowbtc                            # noqa
 from ccxt.async_support.fmfwio import fmfwio                              # noqa: F401
 from ccxt.async_support.ftx import ftx                                    # noqa: F401
 from ccxt.async_support.ftxus import ftxus                                # noqa: F401
+from ccxt.async_support.gate import gate                                  # noqa: F401
 from ccxt.async_support.gateio import gateio                              # noqa: F401
 from ccxt.async_support.gemini import gemini                              # noqa: F401
 from ccxt.async_support.hitbtc import hitbtc                              # noqa: F401
@@ -162,8 +163,8 @@ from ccxt.async_support.therock import therock                            # noqa
 from ccxt.async_support.tidebit import tidebit                            # noqa: F401
 from ccxt.async_support.tidex import tidex                                # noqa: F401
 from ccxt.async_support.timex import timex                                # noqa: F401
+from ccxt.async_support.tokocrypto import tokocrypto                      # noqa: F401
 from ccxt.async_support.upbit import upbit                                # noqa: F401
-from ccxt.async_support.vcc import vcc                                    # noqa: F401
 from ccxt.async_support.wavesexchange import wavesexchange                # noqa: F401
 from ccxt.async_support.wazirx import wazirx                              # noqa: F401
 from ccxt.async_support.whitebit import whitebit                          # noqa: F401
@@ -211,6 +212,7 @@ exchanges = [
     'blockchaincom',
     'btcalpha',
     'btcbox',
+    'btcex',
     'btcmarkets',
     'btctradeua',
     'btcturk',
@@ -226,7 +228,6 @@ exchanges = [
     'coincheck',
     'coinex',
     'coinfalcon',
-    'coinflex',
     'coinmate',
     'coinone',
     'coinspot',
@@ -242,6 +243,7 @@ exchanges = [
     'fmfwio',
     'ftx',
     'ftxus',
+    'gate',
     'gateio',
     'gemini',
     'hitbtc',
@@ -285,8 +287,8 @@ exchanges = [
     'tidebit',
     'tidex',
     'timex',
+    'tokocrypto',
     'upbit',
-    'vcc',
     'wavesexchange',
     'wazirx',
     'whitebit',
