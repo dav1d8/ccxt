@@ -6,7 +6,7 @@
     "ecmaVersion": 2017,
     "sourceType": "script"
   },
-  "extends": ["eslint:recommended", "airbnb-base"],
+  "extends": ["eslint:recommended"],
   "ignorePatterns": ["test/*", "static_dependencies/*"],
   "rules": {
     "strict": "off",
