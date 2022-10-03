@@ -168,7 +168,8 @@ module.exports = class coinbasepro extends coinbaseproRest {
          * @param {object} params extra parameters specific to the coinbasepro api endpoint
          * @returns {object} A dictionary of [order book structures]{@link https://docs.ccxt.com/en/latest/manual.html#order-book-structure} indexed by market symbols
          */
-        const name = 'level2';
+        //This needs to be configurable (see also line 624)
+        const name = 'level2_batch'; //'level2'
         await this.loadMarkets ();
         const market = this.market (symbol);
         symbol = market['symbol'];
@@ -675,7 +676,7 @@ module.exports = class coinbasepro extends coinbaseproRest {
         const marketId = this.safeString (message, 'product_id');
         const market = this.safeMarket (marketId, undefined, '-');
         const symbol = market['symbol'];
-        const name = 'level2';
+        const name = 'level2_batch'; //'level2'
         const messageHash = name + ':' + marketId;
         const subscription = this.safeValue (client.subscriptions, messageHash, {});
         const limit = this.safeInteger (subscription, 'limit');

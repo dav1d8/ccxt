@@ -533,10 +533,9 @@ module.exports = class bitfinex2 extends bitfinex2Rest {
          * @param {object} params extra parameters specific to the bitfinex2 api endpoint
          * @returns {object} A dictionary of [order book structures]{@link https://docs.ccxt.com/en/latest/manual.html#order-book-structure} indexed by market symbols
          */
-        if (limit !== undefined) {
-            if ((limit !== 25) && (limit !== 100)) {
-                throw new ExchangeError (this.id + ' watchOrderBook limit argument must be undefined, 25 or 100');
-            }
+        limit = (limit === undefined) ? 250 : limit; // 250 by default
+        if ((limit !== 1) && (limit !== 25) && (limit !== 100) && (limit !== 250)) {
+            throw new ExchangeError (this.id + ' watchOrderBook limit argument must be undefined, 1, 25, 100 or 250');
         }
         const options = this.safeValue (this.options, 'watchOrderBook', {});
         const prec = this.safeString (options, 'prec', 'P0');
@@ -546,7 +545,7 @@ module.exports = class bitfinex2 extends bitfinex2Rest {
             'freq': freq, // string, frequency of updates 'F0' = realtime, 'F1' = 2 seconds, default is 'F0'
         };
         if (limit !== undefined) {
-            request['len'] = limit; // string, number of price points, '25', '100', default = '25'
+            request['len'] = limit; // string, number of price points, '1', '25', '100', '250', default = '25'
         }
         const orderbook = await this.subscribe ('book', symbol, this.deepExtend (request, params));
         return orderbook.limit ();

@@ -37,7 +37,7 @@ module.exports = class okcoin extends okcoinRest {
                 'watchOrderBook': {
                     'limit': 400, // max
                     'type': 'spot', // margin
-                    'depth': 'depth_l2_tbt', // depth5, depth
+                    'depth': 'depth', // depth5, depth_l2_tbt
                 },
                 'watchBalance': 'spot', // margin, futures, swap
                 'ws': {

@@ -93,7 +93,7 @@ module.exports = class gate extends gateRest {
         symbol = market['symbol'];
         const marketId = market['id'];
         const options = this.safeValue (this.options, 'watchOrderBook', {});
-        const defaultLimit = this.safeInteger (options, 'limit', 20);
+        const defaultLimit = this.safeInteger (options, 'limit', 100);
         if (!limit) {
             limit = defaultLimit;
         }

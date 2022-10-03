@@ -371,11 +371,11 @@ module.exports = class kucoin extends kucoinRest {
         // If the size=0, update the sequence and remove the price of which the
         // size is 0 out of level 2. For other cases, please update the price.
         //
-        if (limit !== undefined) {
-            if ((limit !== 20) && (limit !== 100)) {
-                throw new ExchangeError (this.id + " watchOrderBook 'limit' argument must be undefined, 20 or 100");
-            }
-        }
+        // if (limit !== undefined) {
+        //     if ((limit !== 20) && (limit !== 100)) {
+        //         throw new ExchangeError (this.id + " watchOrderBook 'limit' argument must be undefined, 20 or 100");
+        //     }
+        // }
         await this.loadMarkets ();
         const negotiation = await this.negotiate ();
         const market = this.market (symbol);

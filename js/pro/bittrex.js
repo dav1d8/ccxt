@@ -610,7 +610,7 @@ module.exports = class bittrex extends bittrexRest {
          * @param {object} params extra parameters specific to the bittrex api endpoint
          * @returns {object} A dictionary of [order book structures]{@link https://docs.ccxt.com/en/latest/manual.html#order-book-structure} indexed by market symbols
          */
-        limit = (limit === undefined) ? 25 : limit; // 25 by default
+        limit = (limit === undefined) ? 500 : limit; // 500 by default
         if ((limit !== 1) && (limit !== 25) && (limit !== 500)) {
             throw new BadRequest (this.id + ' watchOrderBook() limit argument must be undefined, 1, 25 or 500, default is 25');
         }
