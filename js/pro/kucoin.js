@@ -347,6 +347,18 @@ module.exports = class kucoin extends kucoinRest {
     }
 
     async watchOrderBook (symbol, limit = undefined, params = {}) {
+        await this.loadMarkets ();
+        limit = 50;
+        const negotiation = await this.negotiate ();
+        const market = this.market (symbol);
+        symbol = market['symbol'];
+        const topic = '/spotMarket/level2Depth50:' + market['id'];
+        const messageHash = topic;
+        const orderbook = await this.subscribe (negotiation, topic, messageHash, this.handleOrderBookSubscription, symbol, params);
+        return orderbook.limit (limit);
+    }
+
+    async watchOrderBookRealtime (symbol, limit = undefined, params = {}) {
         /**
          * @method
          * @name kucoin#watchOrderBook
@@ -444,7 +456,7 @@ module.exports = class kucoin extends kucoinRest {
                 // 3. Playback the cached Level 2 data flow.
                 for (let i = 0; i < messages.length; i++) {
                     const message = messages[i];
-                    this.handleOrderBookMessage (client, message, orderbook);
+                    this.handleOrderBookMessageRealtime (client, message, orderbook);
                 }
                 this.orderbooks[symbol] = orderbook;
                 client.resolve (orderbook, messageHash);
@@ -475,7 +487,7 @@ module.exports = class kucoin extends kucoinRest {
         }
     }
 
-    handleOrderBookMessage (client, message, orderbook) {
+    handleOrderBookMessageRealtime (client, message, orderbook) {
         //
         //     {
         //         "type":"message",
@@ -501,7 +513,7 @@ module.exports = class kucoin extends kucoinRest {
         if (sequenceEnd > orderbook['nonce']) {
             const sequenceStart = this.safeInteger (message, 'sequenceStart');
             if ((sequenceStart !== undefined) && ((sequenceStart - 1) > orderbook['nonce'])) {
-                // todo: client.reject from handleOrderBookMessage properly
+                // todo: client.reject from handleOrderBookMessageRealtime properly
                 throw new ExchangeError (this.id + ' handleOrderBook received an out-of-order nonce');
             }
             const changes = this.safeValue (data, 'changes', {});
@@ -523,6 +535,19 @@ module.exports = class kucoin extends kucoinRest {
     }
 
     handleOrderBook (client, message) {
+        const messageHash = this.safeString (message, 'topic');
+        const subscription = this.safeValue (client.subscriptions, messageHash);
+        const symbol = subscription['symbol'];
+        const data = this.safeValue (message, 'data');
+        const timestamp = this.safeInteger (data, 'timestamp');
+        const snapshot = this.parseOrderBook (data, symbol, timestamp, 'bids', 'asks', 0, 1);
+        const orderbook = this.orderbooks[symbol];
+        orderbook.reset (snapshot);
+        this.orderbooks[symbol] = orderbook;
+        client.resolve (orderbook, messageHash);
+    }
+
+    handleOrderBookRealtime (client, message) {
         //
         // initial snapshot is fetched with ccxt's fetchOrderBook
         // the feed does not include a snapshot, just the deltas
@@ -561,7 +586,7 @@ module.exports = class kucoin extends kucoinRest {
             // 1. After receiving the websocket Level 2 data flow, cache the data.
             orderbook.cache.push (message);
         } else {
-            this.handleOrderBookMessage (client, message, orderbook);
+            this.handleOrderBookMessageRealtime (client, message, orderbook);
             client.resolve (orderbook, messageHash);
         }
     }
@@ -990,7 +1015,8 @@ module.exports = class kucoin extends kucoinRest {
         //
         const subject = this.safeString (message, 'subject');
         const methods = {
-            'trade.l2update': this.handleOrderBook,
+            'level2': this.handleOrderBook,
+            'trade.l2update': this.handleOrderBookRealtime,
             'trade.ticker': this.handleTicker,
             'trade.snapshot': this.handleTicker,
             'trade.l3match': this.handleTrade,
