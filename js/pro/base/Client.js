@@ -126,8 +126,8 @@ module.exports = class Client {
     onConnectionTimeout () {
         if (!this.isOpen ()) {
             const error = new RequestTimeout ('Connection to ' + this.url + ' failed due to a connection timeout')
+            this.connection.close ()
             this.onError (error)
-            this.connection.close (1006)
         }
     }
 
@@ -162,6 +162,7 @@ module.exports = class Client {
             const now = milliseconds ()
             this.lastPong = this.lastPong || now
             if ((this.lastPong + this.keepAlive * this.maxPingPongMisses) < now) {
+                this.connection.close ()
                 this.onError (new RequestTimeout ('Connection to ' + this.url + ' timed out due to a ping-pong keepalive missing on time'))
             } else {
                 if (this.ping) {
@@ -213,6 +214,9 @@ module.exports = class Client {
     onError (error) {
         if (this.verbose) {
             this.log (new Date (), 'onError', error.message)
+        }
+        if (error.cause) {
+            error.message = error.message + ", caused by: " + error.cause.message + ", " + Date.now();
         }
         if (!(error instanceof BaseError)) {
             if (this.isClientClosed) {
@@ -270,7 +274,7 @@ module.exports = class Client {
         // MessageEvent {isTrusted: true, data: "{"e":"depthUpdate","E":1581358737706,"s":"ETHBTC",…"0.06200000"]],"a":[["0.02261300","0.00000000"]]}", origin: "wss://stream.binance.com:9443", lastEventId: "", source: null, …}
         message = message.data
         if (message instanceof ArrayBuffer) {
-            message = new Buffer(message);
+            message = Buffer.from(message);
         }
         if (message.byteLength !== undefined) {
             if (this.gunzip) {
@@ -284,7 +288,8 @@ module.exports = class Client {
                 message = message.toString ()
             }
             if (isJsonEncodedObject (message)) {
-                message = JSON.parse (message.replace (/:(\d{15,}),/g, ':"$1",'))
+                message = this.numberToString(message)
+                message = this.parseJson(message)
             }
             if (this.verbose) {
                 this.log (new Date (), 'onMessage', message)
@@ -297,5 +302,13 @@ module.exports = class Client {
             // reset with a json encoding error ?
         }
         this.onMessageCallback (this, message)
+    }
+
+    numberToString(message) {
+        return message.replace (/:(\d{15,}),/g, ':"$1",')
+    }
+
+    parseJson(message) {
+        return JSON.parse (message)
     }
 }
