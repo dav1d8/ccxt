@@ -61,6 +61,7 @@ module.exports = class Exchange extends BaseExchange {
                 // add support for proxies
                 'options': {
                     'agent': this.agent || this.httpsAgent || this.httpAgent,
+                    'perMessageDeflate': false,
                 }
                 //'connectionTimeout': 10000,
             }, wsOptions);
