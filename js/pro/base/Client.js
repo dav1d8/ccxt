@@ -16,6 +16,7 @@ const errors = require ('../../base/errors')
     } = errors
     , { inflate, gunzip } = require ('./functions')
     , Future = require ('./Future')
+    , { ConnectionClosedByClient } = require("./customErrors/errors")
 
 module.exports = class Client {
 
@@ -37,6 +38,7 @@ module.exports = class Client {
             connectionStarted: undefined, // initiation timestamp in milliseconds
             connectionEstablished: undefined, // success timestamp in milliseconds
             isConnected: false,
+            isClientClosed: false,
             connectionTimer: undefined, // connection-related setTimeout
             connectionTimeout: 10000, // in milliseconds, false to disable
             pingInterval: undefined, // stores the ping-related interval
@@ -213,8 +215,13 @@ module.exports = class Client {
             this.log (new Date (), 'onError', error.message)
         }
         if (!(error instanceof BaseError)) {
-            // in case of ErrorEvent from node_modules/ws/lib/event-target.js
-            error = new NetworkError (error.message)
+            if (this.isClientClosed) {
+                const message = 'Connection has been closed by the client, message: ' + error.message;
+                error = new ConnectionClosedByClient(message)
+            } else {
+                // in case of ErrorEvent from node_modules/ws/lib/event-target.js
+                error = new NetworkError(error.message)
+            }
         }
         this.error = error
         this.reset (this.error)
@@ -226,8 +233,14 @@ module.exports = class Client {
             this.log (new Date (), 'onClose', event)
         }
         if (!this.error) {
-            // todo: exception types for server-side disconnects
-            this.reset (new NetworkError ('connection closed by remote server, closing code ' + String (event.code)))
+            if (this.isClientClosed) {
+                const message = 'Connection has been closed by the client, code: ' + event.code + ", reason: " + (event.reason || "-")
+                this.reset(new ConnectionClosedByClient(message))
+            } else {
+                // todo: exception types for server-side disconnects
+                const message = 'connection closed by remote server, closing code: ' + event.code + ', reason: '+ (event.reason || "-")
+                this.reset (new NetworkError(message))
+            }
         }
         this.onCloseCallback (this, event)
     }

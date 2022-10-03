@@ -8,6 +8,7 @@ const BaseExchange = require ("../../base/Exchange")
         IndexedOrderBook,
         CountedOrderBook,
     } = require ('./OrderBook')
+    , { ExchangeDisabled } = require("./customErrors/errors")
     , functions = require ('./functions');
 
 module.exports = class Exchange extends BaseExchange {
@@ -41,6 +42,9 @@ module.exports = class Exchange extends BaseExchange {
     }
 
     client (url) {
+        if (this.disabled) {
+            throw new ExchangeDisabled("Exchange is already disabled");
+        }
         this.clients = this.clients || {};
         if (!this.clients[url]) {
             const onMessage = this.handleMessage.bind (this);
@@ -58,6 +62,7 @@ module.exports = class Exchange extends BaseExchange {
                 'options': {
                     'agent': this.agent || this.httpsAgent || this.httpAgent,
                 }
+                //'connectionTimeout': 10000,
             }, wsOptions);
             this.clients[url] = new WsClient (url, onMessage, onError, onClose, onConnected, options);
         }
@@ -95,8 +100,7 @@ module.exports = class Exchange extends BaseExchange {
         // The following is a longer version of this method with comments
         //
         const client = this.client (url);
-        // todo: calculate the backoff using the clients cache
-        const backoffDelay = 0;
+        const backoffDelay = this.nextBackoffDelay !== undefined ? this.nextBackoffDelay : 0;
         //
         //  watchOrderBook ---- future ----+---------------+----→ user
         //                                 |               |
@@ -114,6 +118,12 @@ module.exports = class Exchange extends BaseExchange {
         // either with a call to client.resolve or client.reject with
         //  a proper exception class instance
         const connected = client.connect (backoffDelay);
+        // handle backoffDelay
+        connected.then (() => {
+            this.nextBackoffDelay = 0;
+        }).catch ((error) => {
+            this.nextBackoffDelay = backoffDelay === 0 ? 2000 : backoffDelay * 2;
+        });
         // the following is executed only if the catch-clause does not
         // catch any connection-level exceptions from the client
         // (connection established successfully)
@@ -127,8 +137,13 @@ module.exports = class Exchange extends BaseExchange {
                         // add cost here |
                         //               |
                         //               V
+                        if (this.messageQueue === undefined) {
+                            this.messageQueue = [];
+                        }
+                        this.messageQueue.push(message);
                         client.throttle (cost).then (() => {
                             client.send (message);
+                            this.messageQueue = this.messageQueue.filter((_message) => message !== _message);
                         }).catch ((e) => { throw e });
                     } else {
                         client.send (message);
@@ -145,28 +160,49 @@ module.exports = class Exchange extends BaseExchange {
     }
 
     onError (client, error) {
-        if ((client.url in this.clients) && (this.clients[client.url].error)) {
-            delete this.clients[client.url];
-        }
-    }
-
-    onClose (client, error) {
-        if (client.error) {
-            // connection closed due to an error, do nothing
-        } else {
-            // server disconnected a working connection
-            if (this.clients[client.url]) {
-                delete this.clients[client.url];
+        //if ((client.url in this.clients) && (this.clients[client.url].error)) {
+        //    delete this.clients[client.url];
+        //}
+        //if (this.clients[client.url] === client && (this.clients[client.url].error)) {
+        //    delete this.clients[client.url];
+        //}
+        if (!this.disabled) {
+            this.disabled = true;
+            if (this.onDisabled) {
+                this.onDisabled(client.isClientClosed);
             }
         }
     }
 
-    async close () {
+    onClose (client, error) {
+        //if (client.error) {
+        //    // connection closed due to an error, do nothing
+        //} else {
+        //    // server disconnected a working connection
+        //    if (this.clients[client.url]) {
+        //        delete this.clients[client.url];
+        //    }
+        //}
+        if (!this.disabled) {
+            this.disabled = true;
+            if (this.onDisabled) {
+                this.onDisabled(client.isClientClosed);
+            }
+        }
+    }
+
+    close () {
         const clients = Object.values (this.clients || {});
         for (let i = 0; i < clients.length; i++) {
             const client = clients[i];
-            delete this.clients[client.url];
-            await client.close ();
+            //delete this.clients[client.url];
+            client.close ();
+        }
+        if (!this.disabled) {
+            this.disabled = true;
+            if (this.onDisabled) {
+                this.onDisabled(true);
+            }
         }
     }
 

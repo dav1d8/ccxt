@@ -13,6 +13,8 @@ declare module 'ccxt' {
         constructor(message: string);
     }
 
+    export class ConnectionClosedByClient extends BaseError {}
+    export class ExchangeDisabled extends BaseError {}
     export class ExchangeError extends BaseError {}
     export class AuthenticationError extends ExchangeError {}
     export class PermissionDenied extends AuthenticationError {}
@@ -448,7 +450,7 @@ declare module 'ccxt' {
         withdraw (currency: string, amount: number, address: string, tag?: string, params?: Params): Promise<WithdrawalResponse>;
         YmdHMS (timestamp: string, infix: string) : string;
     }
-    
+
     /* tslint:disable */
 
     export class alpaca extends Exchange {}

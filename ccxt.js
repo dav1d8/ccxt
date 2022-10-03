@@ -33,6 +33,7 @@ const Exchange  = require ('./js/base/Exchange')
     , Precise   = require ('./js/base/Precise')
     , functions = require ('./js/base/functions')
     , errors    = require ('./js/base/errors')
+    , customErrors = require ('./js/pro/base/customErrors/errors')
 
 //-----------------------------------------------------------------------------
 // this is updated by vss.js when building
@@ -223,6 +224,6 @@ pro.exchanges = Object.keys (pro)
 
 //-----------------------------------------------------------------------------
 
-module.exports = Object.assign ({ version, Exchange, Precise, 'exchanges': Object.keys (exchanges), pro }, exchanges, functions, errors)
+module.exports = Object.assign ({ version, Exchange, Precise, 'exchanges': Object.keys (exchanges), pro }, exchanges, functions, errors, customErrors)
 
 //-----------------------------------------------------------------------------
