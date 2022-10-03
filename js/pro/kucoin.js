@@ -26,7 +26,7 @@ module.exports = class kucoin extends kucoinRest {
                 'tradesLimit': 1000,
                 'watchOrderBookRate': 100, // get updates every 100ms or 1000ms
                 'fetchOrderBookSnapshot': {
-                    'maxAttempts': 3, // default number of sync attempts
+                    'maxAttempts': 5, // default number of sync attempts
                     'delay': 1000, // warmup delay in ms before synchronizing
                 },
                 'watchTicker': {
@@ -391,7 +391,7 @@ module.exports = class kucoin extends kucoinRest {
         const messageHash = this.safeString (subscription, 'messageHash');
         // console.log ('fetchOrderBookSnapshot', nonce, previousSequence, nonce >= previousSequence);
         const options = this.safeValue (this.options, 'fetchOrderBookSnapshot', {});
-        const maxAttempts = this.safeInteger (options, 'maxAttempts', 3);
+        const maxAttempts = this.safeInteger (options, 'maxAttempts');
         let numAttempts = this.safeInteger (subscription, 'numAttempts', 0);
         // retry to syncrhonize if we haven't reached maxAttempts yet
         if (numAttempts < maxAttempts) {
@@ -400,7 +400,8 @@ module.exports = class kucoin extends kucoinRest {
                 numAttempts = this.sum (numAttempts, 1);
                 subscription['numAttempts'] = numAttempts;
                 client.subscriptions[messageHash] = subscription;
-                this.spawn (this.fetchOrderBookSnapshot, client, message, subscription);
+                const delay = this.safeInteger (options, 'delay');
+                this.delay (delay, this.fetchOrderBookSnapshot, client, message, subscription);
             }
         } else {
             if (messageHash in client.subscriptions) {
@@ -553,7 +554,7 @@ module.exports = class kucoin extends kucoinRest {
                 subscription['fetchingOrderBookSnapshot'] = true;
                 client.subscriptions[messageHash] = subscription;
                 const options = this.safeValue (this.options, 'fetchOrderBookSnapshot', {});
-                const delay = this.safeInteger (options, 'delay', this.rateLimit);
+                const delay = this.safeInteger (options, 'delay');
                 // fetch the snapshot in a separate async call after a warmup delay
                 this.delay (delay, this.fetchOrderBookSnapshot, client, message, subscription);
             }

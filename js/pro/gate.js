@@ -60,6 +60,8 @@ module.exports = class gate extends gateRest {
                 'watchOrderBook': {
                     'interval': '100ms',
                 },
+                'fetchOrderBookSnapshotMaxAttempts': 5,
+                'fetchOrderBookSnapshotDelay': 1000,
                 'watchBalance': {
                     'settle': 'usdt', // or btc
                     'spot': 'spot.balances', // spot.margin_balances, spot.funding_balances or spot.cross_balances
@@ -153,7 +155,7 @@ module.exports = class gate extends gateRest {
             // then we cannot align it with the cached deltas and we need to
             // retry synchronizing in maxAttempts
             if ((seqNum === undefined) || (nonce < seqNum)) {
-                const maxAttempts = this.safeInteger (this.options, 'maxOrderBookSyncAttempts', 3);
+                const maxAttempts = this.safeInteger (this.options, 'fetchOrderBookSnapshotMaxAttempts');
                 let numAttempts = this.safeInteger (subscription, 'numAttempts', 0);
                 // retry to synchronize if we haven't reached maxAttempts yet
                 if (numAttempts < maxAttempts) {
@@ -162,7 +164,8 @@ module.exports = class gate extends gateRest {
                         numAttempts = this.sum (numAttempts, 1);
                         subscription['numAttempts'] = numAttempts;
                         client.subscriptions[messageHash] = subscription;
-                        this.spawn (this.fetchOrderBookSnapshot, client, message, subscription);
+                        const delay = this.safeInteger (this.options, 'fetchOrderBookSnapshotDelay');
+                        this.delay (delay, this.fetchOrderBookSnapshot, client, message, subscription);
                     }
                 } else {
                     // throw upon failing to synchronize in maxAttempts
