@@ -46,7 +46,7 @@ class aax(Exchange):
                 'addMargin': False,
                 'cancelAllOrders': True,
                 'cancelOrder': True,
-                'cancelOrders': False,
+                'cancelOrders': True,
                 'createDepositAddress': False,
                 'createOrder': True,
                 'createReduceOnlyOrder': False,
@@ -149,10 +149,10 @@ class aax(Exchange):
                     'public': 'https://api.{hostname}',
                     'private': 'https://api.{hostname}',
                 },
-                'www': 'https://www.aaxpro.com',  # string website URL
-                'doc': 'https://www.aaxpro.com/apidoc/index.html',
-                'fees': 'https://www.aaxpro.com/en-US/fees/',
-                'referral': 'https://www.aaxpro.com/invite/sign-up?inviteCode=JXGm5Fy7R2MB',
+                'www': 'https://www.aax.com',  # string website URL
+                'doc': 'https://www.aax.com/apidoc/index.html',
+                'fees': 'https://www.aax.com/en-US/vip/',
+                'referral': 'https://www.aax.com/invite/sign-up?inviteCode=JXGm5Fy7R2MB',
             },
             'api': {
                 'v1': {
@@ -1048,17 +1048,18 @@ class aax(Exchange):
         #         0.042684,  # 1 high
         #         0.042366,  # 2 low
         #         0.042386,  # 3 close
-        #         0.93734243,  # 4 volume
+        #         1374.66736,  # 4 quote-volume
         #         1611514800,  # 5 timestamp
+        #         32421.4,  # 6 base-volume
         #     ]
         #
         return [
-            self.safe_timestamp(ohlcv, 5),
-            self.safe_number(ohlcv, 0),
-            self.safe_number(ohlcv, 1),
-            self.safe_number(ohlcv, 2),
-            self.safe_number(ohlcv, 3),
-            self.safe_number(ohlcv, 4),
+            self.safe_integer(ohlcv, 5),  # timestamp
+            self.safe_number(ohlcv, 0),  # open
+            self.safe_number(ohlcv, 1),  # high
+            self.safe_number(ohlcv, 2),  # low
+            self.safe_number(ohlcv, 3),  # close
+            self.safe_number(ohlcv, 6),  # base-volume
         ]
 
     async def fetch_ohlcv(self, symbol, timeframe='1m', since=None, limit=None, params={}):
@@ -1092,9 +1093,8 @@ class aax(Exchange):
         #
         #     {
         #         "data":[
-        #             [0.042398,0.042684,0.042366,0.042386,0.93734243,1611514800],
-        #             [0.042386,0.042602,0.042234,0.042373,1.01925239,1611518400],
-        #             [0.042373,0.042558,0.042362,0.042389,0.93801705,1611522000],
+        #             [0.042398,0.042684,0.042366,0.042386,1374.66736,1611514800,32421.4],
+        #             ...
         #         ],
         #         "success":true,
         #         "t":1611875157
@@ -1555,6 +1555,43 @@ class aax(Exchange):
         #
         data = self.safe_value(response, 'data', {})
         return self.parse_order(data, market)
+
+    async def cancel_orders(self, ids, symbol=None, params={}):
+        """
+        cancel all open orders in a market
+        :param str symbol: unified market symbol
+        :param dict params: extra parameters specific to the aax api endpoint
+        :returns [dict]: raw data of order ids queued for cancelation
+        """
+        if symbol is None:
+            raise ArgumentsRequired(self.id + ' cancelOrders() requires a symbol argument')
+        await self.load_markets()
+        market = self.market(symbol)
+        request = {
+            'symbol': market['id'],
+        }
+        method = None
+        if market['spot']:
+            method = 'privateDeleteSpotOrdersCancelAll'
+        elif market['contract']:
+            method = 'privateDeleteFuturesOrdersCancelAll'
+        clientOrderIds = self.safe_value(params, 'clientOrderIds')
+        # cannot cancel both by orderId and clientOrderId in the same request
+        # aax throws an error saying order not found
+        if clientOrderIds is not None:
+            params = self.omit(params, ['clientOrderIds'])
+            request['clOrdID'] = ','.join(clientOrderIds)
+        elif ids is not None:
+            request['orderID'] = ','.join(ids)
+        #
+        #  {
+        #      "code": 1,
+        #      "data": ["2gaB7mSf72", "2gaB79T5UA"],
+        #      "message": "success",
+        #      "ts": 1663021367883
+        #  }
+        #
+        return await getattr(self, method)(self.extend(request, params))
 
     async def cancel_all_orders(self, symbol=None, params={}):
         """
@@ -2209,7 +2246,7 @@ class aax(Exchange):
         #     "ts": 1573561743499
         # }
         data = self.safe_value(response, 'data', [])
-        return self.parse_transactions(data, code, since, limit)
+        return self.parse_transactions(data, currency, since, limit)
 
     async def fetch_withdrawals(self, code=None, since=None, limit=None, params={}):
         """
@@ -2257,7 +2294,7 @@ class aax(Exchange):
         #     "ts":1573561743499
         #  }
         data = self.safe_value(response, 'data', [])
-        return self.parse_transactions(data, code, since, limit)
+        return self.parse_transactions(data, currency, since, limit)
 
     def parse_transaction_status_by_type(self, status, type=None):
         statuses = {
@@ -2746,6 +2783,7 @@ class aax(Exchange):
         marginRatio = Precise.string_div(maintenanceMargin, collateral)
         return {
             'info': position,
+            'id': None,
             'symbol': self.safe_string(market, 'symbol'),
             'timestamp': timestamp,
             'datetime': self.iso8601(timestamp),

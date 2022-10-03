@@ -6,17 +6,11 @@ namespace ccxt;
 // https://github.com/ccxt/ccxt/blob/master/CONTRIBUTING.md#how-to-contribute-code
 
 use Exception; // a common import
-use \ccxt\ExchangeError;
-use \ccxt\ArgumentsRequired;
-use \ccxt\BadRequest;
-use \ccxt\InvalidOrder;
-use \ccxt\OrderNotFound;
-use \ccxt\NotSupported;
 
 class bitmart extends Exchange {
 
     public function describe() {
-        return $this->deep_extend(parent::describe (), array(
+        return $this->deep_extend(parent::describe(), array(
             'id' => 'bitmart',
             'name' => 'BitMart',
             'countries' => array( 'US', 'CN', 'HK', 'KR' ),
@@ -72,7 +66,7 @@ class bitmart extends Exchange {
                 'fetchTickers' => true,
                 'fetchTime' => true,
                 'fetchTrades' => true,
-                'fetchTradingFee' => false,
+                'fetchTradingFee' => true,
                 'fetchTradingFees' => false,
                 'fetchTransactionFee' => true,
                 'fetchTransactionFees' => false,
@@ -123,6 +117,11 @@ class bitmart extends Exchange {
                         'spot/v1/symbols/trades' => 5,
                         // contract markets
                         'contract/v1/tickers' => 15,
+                        'contract/public/details' => 5,
+                        'contract/public/depth' => 5,
+                        'contract/public/open-interest' => 30,
+                        'contract/public/funding-rate' => 30,
+                        'contract/public/kline' => 5,
                     ),
                 ),
                 'private' => array(
@@ -144,11 +143,22 @@ class bitmart extends Exchange {
                         'spot/v1/order_detail' => 1,
                         'spot/v2/orders' => 5,
                         'spot/v1/trades' => 5,
+                        // newer order endpoint
+                        'spot/v2/trades' => 5,
+                        'spot/v3/orders' => 5,
+                        'spot/v2/order_detail' => 1,
                         // margin
                         'spot/v1/margin/isolated/borrow_record' => 1,
                         'spot/v1/margin/isolated/repay_record' => 1,
                         'spot/v1/margin/isolated/pairs' => 1,
                         'spot/v1/margin/isolated/account' => 6,
+                        'spot/v1/trade_fee' => 6,
+                        'spot/v1/user_fee' => 6,
+                        // contract
+                        'contract/private/assets-detail' => 5,
+                        'contract/private/order' => 2,
+                        'contract/private/order-history' => 10,
+                        'contract/private/position' => 10,
                     ),
                     'post' => array(
                         // sub-account endpoints
@@ -164,11 +174,17 @@ class bitmart extends Exchange {
                         'spot/v1/batch_orders' => 1,
                         'spot/v2/cancel_order' => 1,
                         'spot/v1/cancel_orders' => 15,
+                        // newer endpoint
+                        'spot/v3/cancel_order' => 1,
+                        'spot/v2/batch_orders' => 1,
+                        'spot/v2/submit_order' => 1,
                         // margin
                         'spot/v1/margin/submit_order' => 1,
                         'spot/v1/margin/isolated/borrow' => 6,
                         'spot/v1/margin/isolated/repay' => 6,
                         'spot/v1/margin/isolated/transfer' => 6,
+                        // contract
+                        'contract/private/trades' => 10,
                     ),
                 ),
             ),
@@ -256,6 +272,8 @@ class bitmart extends Exchange {
                     '60031' => '\\ccxt\\BadRequest', // 415, Unsupported Media Type
                     '60050' => '\\ccxt\\ExchangeError', // 500, User account not found
                     '60051' => '\\ccxt\\ExchangeError', // 500, Internal Server Error
+                    '61001' => '\\ccxt\\InsufficientFunds', // array("message":"Balance not enough","code":61001,"trace":"b85ea1f8-b9af-4001-ac5f-9e061fe93d78","data":array())
+                    '61003' => '\\ccxt\\BadRequest', // array("message":"sub-account not found","code":61003,"trace":"b35ec2fd-0bc9-4ef2-a3c0-6f78d4f335a4","data":array())
                     // spot errors
                     '50000' => '\\ccxt\\BadRequest', // 400, Bad Request
                     '50001' => '\\ccxt\\BadSymbol', // 400, Symbol not found
@@ -277,6 +295,7 @@ class bitmart extends Exchange {
                     '50017' => '\\ccxt\\BadRequest', // 400, RequestParam offset is required
                     '50018' => '\\ccxt\\BadRequest', // 400, Minimum offset is 1
                     '50019' => '\\ccxt\\BadRequest', // 400, Maximum price is %s
+                    '51004' => '\\ccxt\\InsufficientFunds', // array("message":"Exceed the maximum number of borrows available.","code":51004,"trace":"4030b753-9beb-44e6-8352-1633c5edcd47","data":array())
                     // '50019' => '\\ccxt\\ExchangeError', // 400, Invalid status. validate status is [1=Failed, 2=Success, 3=Frozen Failed, 4=Frozen Success, 5=Partially Filled, 6=Fully Fulled, 7=Canceling, 8=Canceled
                     '50020' => '\\ccxt\\InsufficientFunds', // 400, Balance not enough
                     '50021' => '\\ccxt\\BadRequest', // 400, Invalid %s
@@ -284,6 +303,7 @@ class bitmart extends Exchange {
                     '50023' => '\\ccxt\\BadSymbol', // 400, This Symbol can't place order by api
                     '50029' => '\\ccxt\\InvalidOrder', // array("message":"param not match : size * price >=1000","code":50029,"trace":"f931f030-b692-401b-a0c5-65edbeadc598","data":array())
                     '50030' => '\\ccxt\\InvalidOrder', // array("message":"Order is already canceled","code":50030,"trace":"8d6f64ee-ad26-45a4-9efd-1080f9fca1fa","data":array())
+                    '50032' => '\\ccxt\\OrderNotFound', // array("message":"Order does not exist","code":50032,"trace":"8d6b482d-4bf2-4e6c-aab2-9dcd22bf2481","data":array())
                     // below Error codes used interchangeably for both failed postOnly and IOC orders depending on market price and order side
                     '50035' => '\\ccxt\\InvalidOrder', // array("message":"The price is low and there is no matching depth","code":50035,"trace":"677f01c7-8b88-4346-b097-b4226c75c90e","data":array())
                     '50034' => '\\ccxt\\InvalidOrder', // array("message":"The price is high and there is no matching depth","code":50034,"trace":"ebfae59a-ba69-4735-86b2-0ed7b9ca14ea","data":array())
@@ -336,21 +356,11 @@ class bitmart extends Exchange {
                 '$GM' => 'GOLDMINER',
                 '$HERO' => 'Step Hero',
                 '$PAC' => 'PAC',
-                'AUR' => 'Aurum',
                 'BP' => 'BEYOND',
-                'COT' => 'Community Coin',
-                'CPC' => 'CPCoin',
-                'DMS' => 'DimSum', // conflict with Dragon Mainland Shards
-                'FOX' => 'Fox Finance',
                 'GDT' => 'Gorilla Diamond',
                 'GLD' => 'Goldario',
-                'MIM' => 'MIM Swarm',
                 'MVP' => 'MVP Coin',
-                'ONE' => 'Menlo One',
-                'PLA' => 'Plair',
-                'TCT' => 'TacoCat Token',
                 'TRU' => 'Truebit', // conflict with TrueFi
-                'ULT' => 'Ultiledger',
             ),
             'options' => array(
                 'networks' => array(
@@ -1285,16 +1295,16 @@ class bitmart extends Exchange {
                 $limit = $maxLimit;
             }
             $limit = min ($maxLimit, $limit);
+            $now = intval($this->milliseconds() / 1000);
             if ($since === null) {
-                $end = intval($this->milliseconds() / 1000);
-                $start = $end - $limit * $duration;
+                $start = $now - $limit * $duration;
                 $request['from'] = $start;
-                $request['to'] = $end;
+                $request['to'] = $now;
             } else {
                 $start = intval($since / 1000) - 1;
                 $end = $this->sum($start, $limit * $duration);
                 $request['from'] = $start;
-                $request['to'] = $end;
+                $request['to'] = min ($end, $now);
             }
         } elseif (($type === 'swap') || ($type === 'future')) {
             throw new NotSupported($this->id . ' fetchOHLCV () does not accept swap or future markets, only spot markets are allowed');
@@ -1353,18 +1363,19 @@ class bitmart extends Exchange {
         if (($marketType === 'swap') || ($marketType === 'future')) {
             throw new NotSupported($this->id . ' fetchMyTrades () does not accept swap or future markets, only spot markets are allowed');
         }
+        $options = $this->safe_value($this->options, 'fetchMyTrades', array());
+        $defaultLimit = $this->safe_integer($options, 'limit', 200);
         $request = array();
         if ($market['spot']) {
             $request['symbol'] = $market['id'];
-            $request['offset'] = 1; // max offset * $limit < 500
             if ($limit === null) {
-                $limit = 100; // max 100
+                $limit = $defaultLimit;
             }
-            $request['limit'] = $limit;
+            $request['N'] = $limit;
         } elseif ($market['swap'] || $market['future']) {
             throw new NotSupported($this->id . ' fetchMyTrades () does not accept swap or future markets, only spot markets are allowed');
         }
-        $response = $this->privateGetSpotV1Trades (array_merge($request, $query));
+        $response = $this->privateGetSpotV2Trades (array_merge($request, $query));
         //
         // spot
         //
@@ -1440,14 +1451,20 @@ class bitmart extends Exchange {
         if (($marketType === 'swap') || ($marketType === 'future')) {
             throw new NotSupported($this->id . ' fetchOrderTrades () does not accept swap or future orders, only spot orders are allowed');
         }
+        $options = $this->safe_value($this->options, 'fetchOrderTrades', array());
+        $defaultLimit = $this->safe_integer($options, 'limit', 200);
         $request = array();
         if ($market['spot']) {
             $request['symbol'] = $market['id'];
             $request['order_id'] = $id;
+            if ($limit === null) {
+                $limit = $defaultLimit;
+            }
+            $request['N'] = $limit;
         } elseif ($market['swap'] || $market['future']) {
             throw new NotSupported($this->id . ' fetchOrderTrades () does not accept swap or future orders, only spot orders are allowed');
         }
-        $response = $this->privateGetSpotV1Trades (array_merge($request, $query));
+        $response = $this->privateGetSpotV2Trades (array_merge($request, $query));
         //
         // spot
         //
@@ -1592,6 +1609,56 @@ class bitmart extends Exchange {
         //     }
         //
         return $this->parse_balance($response);
+    }
+
+    public function parse_trading_fee($fee, $market = null) {
+        //
+        //     {
+        //         $symbol => 'ETH_USDT',
+        //         taker_fee_rate => '0.0025',
+        //         maker_fee_rate => '0.0025'
+        //     }
+        //
+        $marketId = $this->safe_string($fee, 'symbol');
+        $symbol = $this->safe_symbol($marketId);
+        return array(
+            'info' => $fee,
+            'symbol' => $symbol,
+            'maker' => $this->safe_number($fee, 'maker_fee_rate'),
+            'taker' => $this->safe_number($fee, 'taker_fee_rate'),
+        );
+    }
+
+    public function fetch_trading_fee($symbol, $params = array ()) {
+        /**
+         * fetch the trading fees for a $market
+         * @param {string} $symbol unified $market $symbol
+         * @param {array} $params extra parameters specific to the bitmart api endpoint
+         * @return {array} a {@link https://docs.ccxt.com/en/latest/manual.html#fee-structure fee structure}
+         */
+        $this->load_markets();
+        $market = $this->market($symbol);
+        if ($market['swap'] || $market['future']) {
+            throw new NotSupported($this->id . ' fetchTradingFee () does not accept swap or future markets, only spot markets are allowed');
+        }
+        $request = array(
+            'symbol' => $market['id'],
+        );
+        $response = $this->privateGetSpotV1TradeFee (array_merge($request, $params));
+        //
+        //     {
+        //         message => 'OK',
+        //         code => '1000',
+        //         trace => '5a6f1e40-37fe-4849-a494-03279fadcc62',
+        //         $data => {
+        //             $symbol => 'ETH_USDT',
+        //             taker_fee_rate => '0.0025',
+        //             maker_fee_rate => '0.0025'
+        //         }
+        //     }
+        //
+        $data = $this->safe_value($response, 'data');
+        return $this->parse_trading_fee($data);
     }
 
     public function parse_order($order, $market = null) {
@@ -1745,6 +1812,7 @@ class bitmart extends Exchange {
          * @param {float} $amount how much of currency you want to trade in units of base currency
          * @param {float|null} $price the $price at which the $order is to be fullfilled, in units of the quote currency, ignored in $market orders
          * @param {array} $params extra parameters specific to the bitmart api endpoint
+         * @param {string|null} $params->marginMode 'cross' or 'isolated'
          * @return {array} an {@link https://docs.ccxt.com/en/latest/manual.html#$order-structure $order structure}
          */
         $this->load_markets();
@@ -1764,7 +1832,7 @@ class bitmart extends Exchange {
             $request['symbol'] = $market['id'];
             $request['side'] = $side;
             $request['type'] = $type;
-            $method = 'privatePostSpotV1SubmitOrder';
+            $method = 'privatePostSpotV2SubmitOrder';
             if ($isLimitOrder) {
                 $request['size'] = $this->amount_to_precision($symbol, $amount);
                 $request['price'] = $this->price_to_precision($symbol, $price);
@@ -1799,10 +1867,7 @@ class bitmart extends Exchange {
             $request['type'] = 'ioc';
         }
         list($marginMode, $query) = $this->handle_margin_mode_and_params('createOrder', $params);
-        if (($marginMode === 'cross') || ($marginMode === 'isolated')) {
-            if ($marginMode !== 'isolated') {
-                throw new NotSupported($this->id . ' createOrder() is only available for isolated margin');
-            }
+        if ($marginMode !== null) {
             $method = 'privatePostSpotV1MarginSubmitOrder';
         }
         $response = $this->$method (array_merge($request, $query));
@@ -1843,12 +1908,12 @@ class bitmart extends Exchange {
         $market = $this->market($symbol);
         $request = array();
         if ($market['spot']) {
-            $request['order_id'] = intval($id);
+            $request['order_id'] = (string) $id;
             $request['symbol'] = $market['id'];
         } elseif ($market['swap'] || $market['future']) {
             throw new NotSupported($this->id . ' cancelOrder () does not accept swap or future orders, only spot orders are allowed');
         }
-        $response = $this->privatePostSpotV2CancelOrder (array_merge($request, $params));
+        $response = $this->privatePostSpotV3CancelOrder (array_merge($request, $params));
         //
         // spot
         //
@@ -1976,7 +2041,7 @@ class bitmart extends Exchange {
         } elseif ($market['swap'] || $market['future']) {
             throw new NotSupported($this->id . ' fetchOrdersByStatus () does not support swap or futures $orders, only spot $orders are allowed');
         }
-        $response = $this->privateGetSpotV2Orders (array_merge($request, $query));
+        $response = $this->privateGetSpotV3Orders (array_merge($request, $query));
         //
         // spot
         //
@@ -2102,7 +2167,7 @@ class bitmart extends Exchange {
         } elseif ($market['swap'] || $market['future']) {
             throw new NotSupported($this->id . ' fetchOrder () does not support swap or futures $orders, only spot $orders are allowed');
         }
-        $response = $this->privateGetSpotV1OrderDetail (array_merge($request, $query));
+        $response = $this->privateGetSpotV2OrderDetail (array_merge($request, $query));
         //
         // spot
         //
@@ -2528,16 +2593,17 @@ class bitmart extends Exchange {
          * @param {string} $amount the $amount to repay
          * @param {string} $symbol unified $market $symbol
          * @param {array} $params extra parameters specific to the bitmart api endpoint
+         * @param {string|null} $params->marginMode 'isolated' is the default and 'cross' is unavailable
          * @return {array} a {@link https://docs.ccxt.com/en/latest/manual.html#margin-loan-structure margin loan structure}
          */
         $this->load_markets();
         if ($symbol === null) {
             throw new ArgumentsRequired($this->id . ' repayMargin() requires a $symbol argument');
         }
-        $defaultMarginMode = $this->safe_string_2($this->options, 'defaultMarginMode', 'marginMode', 'isolated');
-        $marginMode = $this->safe_string($params, 'marginMode', $defaultMarginMode);
-        if ($marginMode !== 'isolated') {
-            throw new BadRequest($this->id . ' repayMargin() is only available for isolated margin');
+        $marginMode = null;
+        list($marginMode, $params) = $this->handle_margin_mode_and_params('repayMargin', $params);
+        if ($marginMode === null) {
+            $marginMode = 'isolated'; // isolated as the default $marginMode
         }
         $market = $this->market($symbol);
         $currency = $this->currency($code);
@@ -2546,7 +2612,6 @@ class bitmart extends Exchange {
             'currency' => $currency['id'],
             'amount' => $this->currency_to_precision($code, $amount),
         );
-        $params = $this->omit($params, 'marginMode');
         $response = $this->privatePostSpotV1MarginIsolatedRepay (array_merge($request, $params));
         //
         //     {
@@ -2574,16 +2639,17 @@ class bitmart extends Exchange {
          * @param {string} $amount the $amount to borrow
          * @param {string} $symbol unified $market $symbol
          * @param {array} $params extra parameters specific to the bitmart api endpoint
+         * @param {string|null} $params->marginMode 'isolated' is the default and 'cross' is unavailable
          * @return {array} a {@link https://docs.ccxt.com/en/latest/manual.html#margin-loan-structure margin loan structure}
          */
         $this->load_markets();
         if ($symbol === null) {
             throw new ArgumentsRequired($this->id . ' borrowMargin() requires a $symbol argument');
         }
-        $defaultMarginMode = $this->safe_string_2($this->options, 'defaultMarginMode', 'marginMode', 'isolated');
-        $marginMode = $this->safe_string($params, 'marginMode', $defaultMarginMode);
-        if ($marginMode !== 'isolated') {
-            throw new BadRequest($this->id . ' borrowMargin() is only available for isolated margin');
+        $marginMode = null;
+        list($marginMode, $params) = $this->handle_margin_mode_and_params('borrowMargin', $params);
+        if ($marginMode === null) {
+            $marginMode = 'isolated'; // isolated as the default $marginMode
         }
         $market = $this->market($symbol);
         $currency = $this->currency($code);
@@ -2592,7 +2658,6 @@ class bitmart extends Exchange {
             'currency' => $currency['id'],
             'amount' => $this->currency_to_precision($code, $amount),
         );
-        $params = $this->omit($params, 'marginMode');
         $response = $this->privatePostSpotV1MarginIsolatedBorrow (array_merge($request, $params));
         //
         //     {
@@ -2985,6 +3050,29 @@ class bitmart extends Exchange {
         );
     }
 
+    public function handle_margin_mode_and_params($methodName, $params = array ()) {
+        /**
+         * @ignore
+         * $marginMode specified by $params["marginMode"], $this->options["marginMode"], $this->options["defaultMarginMode"], $params["margin"] = true or $this->options["defaultType"] = 'margin'
+         * @param {array} $params extra parameters specific to the exchange api endpoint
+         * @return array([string|null, object]) the $marginMode in lowercase
+         */
+        $defaultType = $this->safe_string($this->options, 'defaultType');
+        $isMargin = $this->safe_value($params, 'margin', false);
+        $marginMode = null;
+        list($marginMode, $params) = parent::handle_margin_mode_and_params($methodName, $params);
+        if ($marginMode !== null) {
+            if ($marginMode !== 'isolated') {
+                throw new NotSupported($this->id . ' only isolated margin is supported');
+            }
+        } else {
+            if (($defaultType === 'margin') || ($isMargin === true)) {
+                $marginMode = 'isolated';
+            }
+        }
+        return array( $marginMode, $params );
+    }
+
     public function nonce() {
         return $this->milliseconds();
     }
@@ -3036,9 +3124,9 @@ class bitmart extends Exchange {
         //
         //     array("errno":"OK","message":"INVALID_PARAMETER","code":49998,"trace":"eb5ebb54-23cd-4de2-9064-e090b6c3b2e3","data":null)
         //
-        $message = $this->safe_string($response, 'message');
+        $message = $this->safe_string_lower($response, 'message');
         $errorCode = $this->safe_string($response, 'code');
-        if ((($errorCode !== null) && ($errorCode !== '1000')) || (($message !== null) && ($message !== 'OK'))) {
+        if ((($errorCode !== null) && ($errorCode !== '1000')) || (($message !== null) && ($message !== 'ok'))) {
             $feedback = $this->id . ' ' . $body;
             $this->throw_exactly_matched_exception($this->exceptions['exact'], $errorCode, $feedback);
             $this->throw_broadly_matched_exception($this->exceptions['broad'], $errorCode, $feedback);

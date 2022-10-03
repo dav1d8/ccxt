@@ -6,16 +6,16 @@ namespace ccxt;
 // https://github.com/ccxt/ccxt/blob/master/CONTRIBUTING.md#how-to-contribute-code
 
 use Exception; // a common import
-use \ccxt\ExchangeError;
 
 class poloniex extends Exchange {
 
     public function describe() {
-        return $this->deep_extend(parent::describe (), array(
+        return $this->deep_extend(parent::describe(), array(
             'id' => 'poloniex',
             'name' => 'Poloniex',
             'countries' => array( 'US' ),
-            'rateLimit' => 100,
+            // 200 requests per second for some unauthenticated market endpoints => 1000ms / 200 = 5ms between requests
+            'rateLimit' => 5,
             'certified' => false,
             'pro' => false,
             'has' => array(
@@ -90,54 +90,55 @@ class poloniex extends Exchange {
             'api' => array(
                 'public' => array(
                     'get' => array(
-                        'markets' => 1,
-                        'markets/{symbol}' => 0.2,
-                        'currencies' => 1,
-                        'currencies/{currency}' => 1,
-                        'timestamp' => 0.2,
-                        'markets/price' => 0.2,
-                        'markets/{symbol}/price' => 0.2,
-                        'markets/{symbol}/orderBook' => 0.2,
-                        'markets/{symbol}/candles' => 0.2,
-                        'markets/{symbol}/trades' => 0.2,
-                        'markets/ticker24h' => 1,
-                        'markets/{symbol}/ticker24h' => 1,
+                        'markets' => 20,
+                        'markets/{symbol}' => 1,
+                        'currencies' => 20,
+                        'currencies/{currency}' => 20,
+                        'timestamp' => 1,
+                        'markets/price' => 1,
+                        'markets/{symbol}/price' => 1,
+                        'markets/{symbol}/orderBook' => 1,
+                        'markets/{symbol}/candles' => 1,
+                        'markets/{symbol}/trades' => 20,
+                        'markets/ticker24h' => 20,
+                        'markets/{symbol}/ticker24h' => 20,
                     ),
                 ),
                 'private' => array(
                     'get' => array(
-                        'accounts' => 0.2,
-                        'accounts/balances' => 0.2,
-                        'accounts/{id}/balances' => 0.2,
-                        'accounts/transfer' => 1,
-                        'accounts/transfer/{id}' => 0.2,
-                        'feeinfo' => 1,
-                        'wallets/addresses' => 1,
-                        'wallets/activity' => 1,
-                        'wallets/addresses/{currency}' => 1,
-                        'orders' => 1,
-                        'orders/{id}' => 0.2,
-                        'orders/history' => 1,
-                        'smartorders' => 1,
-                        'smartorders/{id}' => 0.2,
-                        'smartorders/history' => 1,
-                        'trades' => 1,
-                        'orders/{id}/trades' => 0.2,
+                        'accounts' => 4,
+                        'accounts/activity' => 4,
+                        'accounts/balances' => 4,
+                        'accounts/{id}/balances' => 4,
+                        'accounts/transfer' => 20,
+                        'accounts/transfer/{id}' => 4,
+                        'feeinfo' => 20,
+                        'wallets/addresses' => 20,
+                        'wallets/activity' => 20,
+                        'wallets/addresses/{currency}' => 20,
+                        'orders' => 20,
+                        'orders/{id}' => 4,
+                        'orders/history' => 20,
+                        'smartorders' => 20,
+                        'smartorders/{id}' => 4,
+                        'smartorders/history' => 20,
+                        'trades' => 20,
+                        'orders/{id}/trades' => 4,
                     ),
                     'post' => array(
-                        'accounts/transfer' => 0.2,
-                        'wallets/address' => 1,
-                        'wallets/withdraw' => 1,
-                        'orders' => 0.2,
-                        'smartorders' => 0.2,
+                        'accounts/transfer' => 4,
+                        'wallets/address' => 20,
+                        'wallets/withdraw' => 20,
+                        'orders' => 4,
+                        'smartorders' => 4,
                     ),
                     'delete' => array(
-                        'orders/{id}' => 0.2,
-                        'orders/cancelByIds' => 1,
-                        'orders' => 1,
-                        'smartorders/{id}' => 0.2,
-                        'smartorders/cancelByIds' => 1,
-                        'smartorders' => 1,
+                        'orders/{id}' => 4,
+                        'orders/cancelByIds' => 20,
+                        'orders' => 20,
+                        'smartorders/{id}' => 4,
+                        'smartorders/cancelByIds' => 20,
+                        'smartorders' => 20,
                     ),
                 ),
             ),
@@ -280,11 +281,11 @@ class poloniex extends Exchange {
             $this->safe_number($ohlcv, 1),
             $this->safe_number($ohlcv, 0),
             $this->safe_number($ohlcv, 3),
-            $this->safe_number($ohlcv, 4),
+            $this->safe_number($ohlcv, 5),
         );
     }
 
-    public function fetch_ohlcv($symbol, $timeframe = '5m', $since = null, $limit = null, $params = array ()) {
+    public function fetch_ohlcv($symbol, $timeframe = '1m', $since = null, $limit = null, $params = array ()) {
         /**
          * fetches historical candlestick data containing the open, high, low, and close price, and the volume of a $market
          * @param {string} $symbol unified $symbol of the $market to fetch OHLCV data for
@@ -769,10 +770,8 @@ class poloniex extends Exchange {
             // 'direction' => 'PRE', // PRE, NEXT The direction before or after ‘from'.
         );
         if ($since !== null) {
-            $request['startTime'] = intval($since / 1000);
-            $request['endtime'] = $this->sum($this->seconds(), 1); // adding 1 is a fix for #3411
+            $request['startTime'] = $since;
         }
-        // $limit is disabled (does not really work as expected)
         if ($limit !== null) {
             $request['limit'] = intval($limit);
         }
@@ -1318,14 +1317,14 @@ class poloniex extends Exchange {
         $asksResult = array();
         $bidsResult = array();
         for ($i = 0; $i < count($asks); $i++) {
-            if ((fmod($i, 2)) === 0) {
+            if ((fmod($i, 2)) < 1) {
                 $price = $this->safe_number($asks, $i);
                 $amount = $this->safe_number($asks, $this->sum($i, 1));
                 $asksResult[] = array( $price, $amount );
             }
         }
         for ($i = 0; $i < count($bids); $i++) {
-            if ((fmod($i, 2)) === 0) {
+            if ((fmod($i, 2)) < 1) {
                 $price = $this->safe_number($bids, $i);
                 $amount = $this->safe_number($bids, $this->sum($i, 1));
                 $bidsResult[] = array( $price, $amount );
@@ -1545,9 +1544,6 @@ class poloniex extends Exchange {
             'start' => $start, // UNIX timestamp, required
             'end' => $now, // UNIX timestamp, required
         );
-        if ($limit !== null) {
-            $request['limit'] = $limit;
-        }
         $response = $this->privateGetWalletsActivity (array_merge($request, $params));
         //
         //     {
@@ -1689,9 +1685,11 @@ class poloniex extends Exchange {
             'COMPLETE' => 'ok',
             'COMPLETED' => 'ok',
             'AWAITING APPROVAL' => 'pending',
+            'AWAITING_APPROVAL' => 'pending',
             'PENDING' => 'pending',
             'PROCESSING' => 'pending',
             'COMPLETE ERROR' => 'failed',
+            'COMPLETE_ERROR' => 'failed',
         );
         return $this->safe_string($statuses, $status, $status);
     }
@@ -1702,7 +1700,6 @@ class poloniex extends Exchange {
         //
         //     {
         //         "txid" => "f49d489616911db44b740612d19464521179c76ebe9021af85b6de1e2f8d68cd",
-        //         "type" => "deposit",
         //         "amount" => "49798.01987021",
         //         "status" => "COMPLETE",
         //         "address" => "DJVJZ58tJC8UeUv9Tqcdtn6uhWobouxFLT",
@@ -1715,26 +1712,22 @@ class poloniex extends Exchange {
         // withdrawals
         //
         //     {
-        //         "fee" => "0.00050000",
-        //         "type" => "withdrawal",
-        //         "amount" => "0.40234387",
-        //         "status" => "COMPLETE => fbabb2bf7d81c076f396f3441166d5f60f6cea5fdfe69e02adcc3b27af8c2746",
-        //         "address" => "1EdAqY4cqHoJGAgNfUFER7yZpg1Jc9DUa3",
-        //         "currency" => "BTC",
-        //         "canCancel" => 0,
-        //         "ipAddress" => "x.x.x.x",
-        //         "paymentID" => null,
-        //         "timestamp" => 1523834337,
-        //         "canResendEmail" => 0,
-        //         "withdrawalNumber" => 11162900
+        //         "withdrawalRequestsId" => 7397527,
+        //         "currency" => "ETC",
+        //         "address" => "0x26419a62055af459d2cd69bb7392f5100b75e304",
+        //         "amount" => "13.19951600",
+        //         "fee" => "0.01000000",
+        //         "timestamp" => 1506010932,
+        //         "status" => "COMPLETED",
+        //         "txid" => "343346392f82ac16e8c2604f2a604b7b2382d0e9d8030f673821f8de4b5f5bk",
+        //         "ipAddress" => "1.2.3.4",
+        //         "paymentID" => null
         //     }
         //
         // withdraw
         //
         //     {
-        //         response => 'Withdrew 1.00000000 USDT.',
-        //         email2FA => false,
-        //         withdrawalNumber => 13449869
+        //         "withdrawalRequestsId" => 33485231
         //     }
         //
         $timestamp = $this->safe_timestamp($transaction, 'timestamp');
@@ -1745,16 +1738,18 @@ class poloniex extends Exchange {
         $txid = $this->safe_string($transaction, 'txid');
         $type = (is_array($transaction) && array_key_exists('withdrawalRequestsId', $transaction)) ? 'withdrawal' : 'deposit';
         $id = $this->safe_string_2($transaction, 'withdrawalRequestsId', 'depositNumber');
-        $amount = $this->safe_number($transaction, 'amount');
         $address = $this->safe_string($transaction, 'address');
         $tag = $this->safe_string($transaction, 'paymentID');
-        // according to https://poloniex.com/fees/
-        $feeCost = $this->safe_number($transaction, 'fee');
+        $amountString = $this->safe_string($transaction, 'amount');
+        $feeCostString = $this->safe_string($transaction, 'fee');
+        if ($type === 'withdrawal') {
+            $amountString = Precise::string_sub($amountString, $feeCostString);
+        }
         return array(
             'info' => $transaction,
             'id' => $id,
             'currency' => $code,
-            'amount' => $amount,
+            'amount' => $this->parse_number($amountString),
             'network' => null,
             'address' => $address,
             'addressTo' => null,
@@ -1770,7 +1765,7 @@ class poloniex extends Exchange {
             'datetime' => $this->iso8601($timestamp),
             'fee' => array(
                 'currency' => $code,
-                'cost' => $feeCost,
+                'cost' => $this->parse_number($feeCostString),
             ),
         );
     }

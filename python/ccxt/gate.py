@@ -1470,7 +1470,8 @@ class gate(Exchange):
             tag = self.safe_string(entry, 'payment_id')
             result[network] = {
                 'info': entry,
-                'code': code,
+                'code': code,  # kept here for backward-compatibility, but will be removed soon
+                'currency': code,
                 'address': address,
                 'tag': tag,
             }
@@ -1519,7 +1520,8 @@ class gate(Exchange):
         self.check_address(address)
         return {
             'info': response,
-            'code': code,
+            'code': code,  # kept here for backward-compatibility, but will be removed soon
+            'currency': code,
             'address': address,
             'tag': tag,
             'network': None,
@@ -2227,14 +2229,16 @@ class gate(Exchange):
         #
         # Spot market candles
         #
-        #     [
-        #         "1626163200",           # Unix timestamp in seconds
-        #         "346711.933138181617",  # Trading volume
-        #         "33165.23",             # Close price
-        #         "33260",                # Highest price
-        #         "33117.6",              # Lowest price
-        #         "33184.47"              # Open price
-        #     ]
+        #    [
+        #        "1660957920",  # timestamp
+        #        "6227.070147198573",  # quote volume
+        #        "0.0000133485",  # close
+        #        "0.0000133615",  # high
+        #        "0.0000133347",  # low
+        #        "0.0000133468",  # open
+        #        "466641934.99"  # base volume
+        #    ]
+        #
         #
         # Mark and Index price candles
         #
@@ -2253,7 +2257,7 @@ class gate(Exchange):
                 self.safe_number(ohlcv, 3),      # highest price
                 self.safe_number(ohlcv, 4),      # lowest price
                 self.safe_number(ohlcv, 2),      # close price
-                self.safe_number(ohlcv, 1),      # trading volume
+                self.safe_number(ohlcv, 6),      # trading volume
             ]
         else:
             # Mark and Index price candles
@@ -3825,6 +3829,7 @@ class gate(Exchange):
         percentage = Precise.string_mul(Precise.string_div(unrealisedPnl, initialMarginString), '100')
         return {
             'info': position,
+            'id': None,
             'symbol': self.safe_string(market, 'symbol'),
             'timestamp': None,
             'datetime': None,

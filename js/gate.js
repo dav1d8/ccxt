@@ -1513,7 +1513,8 @@ module.exports = class gate extends Exchange {
             const tag = this.safeString (entry, 'payment_id');
             result[network] = {
                 'info': entry,
-                'code': code,
+                'code': code, // kept here for backward-compatibility, but will be removed soon
+                'currency': code,
                 'address': address,
                 'tag': tag,
             };
@@ -1568,7 +1569,8 @@ module.exports = class gate extends Exchange {
         this.checkAddress (address);
         return {
             'info': response,
-            'code': code,
+            'code': code, // kept here for backward-compatibility, but will be removed soon
+            'currency': code,
             'address': address,
             'tag': tag,
             'network': undefined,
@@ -2340,14 +2342,16 @@ module.exports = class gate extends Exchange {
         //
         // Spot market candles
         //
-        //     [
-        //         "1626163200",           // Unix timestamp in seconds
-        //         "346711.933138181617",  // Trading volume
-        //         "33165.23",             // Close price
-        //         "33260",                // Highest price
-        //         "33117.6",              // Lowest price
-        //         "33184.47"              // Open price
-        //     ]
+        //    [
+        //        "1660957920", // timestamp
+        //        "6227.070147198573", // quote volume
+        //        "0.0000133485", // close
+        //        "0.0000133615", // high
+        //        "0.0000133347", // low
+        //        "0.0000133468", // open
+        //        "466641934.99" // base volume
+        //    ]
+        //
         //
         // Mark and Index price candles
         //
@@ -2366,7 +2370,7 @@ module.exports = class gate extends Exchange {
                 this.safeNumber (ohlcv, 3),      // highest price
                 this.safeNumber (ohlcv, 4),      // lowest price
                 this.safeNumber (ohlcv, 2),      // close price
-                this.safeNumber (ohlcv, 1),      // trading volume
+                this.safeNumber (ohlcv, 6),      // trading volume
             ];
         } else {
             // Mark and Index price candles
@@ -4061,6 +4065,7 @@ module.exports = class gate extends Exchange {
         const percentage = Precise.stringMul (Precise.stringDiv (unrealisedPnl, initialMarginString), '100');
         return {
             'info': position,
+            'id': undefined,
             'symbol': this.safeString (market, 'symbol'),
             'timestamp': undefined,
             'datetime': undefined,

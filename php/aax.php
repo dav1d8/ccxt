@@ -6,15 +6,11 @@ namespace ccxt;
 // https://github.com/ccxt/ccxt/blob/master/CONTRIBUTING.md#how-to-contribute-code
 
 use Exception; // a common import
-use \ccxt\ArgumentsRequired;
-use \ccxt\BadRequest;
-use \ccxt\BadSymbol;
-use \ccxt\OrderNotFound;
 
 class aax extends Exchange {
 
     public function describe() {
-        return $this->deep_extend(parent::describe (), array(
+        return $this->deep_extend(parent::describe(), array(
             'id' => 'aax',
             'name' => 'AAX',
             'countries' => array( 'MT' ), // Malta
@@ -37,7 +33,7 @@ class aax extends Exchange {
                 'addMargin' => false,
                 'cancelAllOrders' => true,
                 'cancelOrder' => true,
-                'cancelOrders' => false,
+                'cancelOrders' => true,
                 'createDepositAddress' => false,
                 'createOrder' => true,
                 'createReduceOnlyOrder' => false,
@@ -140,10 +136,10 @@ class aax extends Exchange {
                     'public' => 'https://api.{hostname}',
                     'private' => 'https://api.{hostname}',
                 ),
-                'www' => 'https://www.aaxpro.com', // string website URL
-                'doc' => 'https://www.aaxpro.com/apidoc/index.html',
-                'fees' => 'https://www.aaxpro.com/en-US/fees/',
-                'referral' => 'https://www.aaxpro.com/invite/sign-up?inviteCode=JXGm5Fy7R2MB',
+                'www' => 'https://www.aax.com', // string website URL
+                'doc' => 'https://www.aax.com/apidoc/index.html',
+                'fees' => 'https://www.aax.com/en-US/vip/',
+                'referral' => 'https://www.aax.com/invite/sign-up?inviteCode=JXGm5Fy7R2MB',
             ),
             'api' => array(
                 'v1' => array(
@@ -1069,17 +1065,18 @@ class aax extends Exchange {
         //         0.042684, // 1 high
         //         0.042366, // 2 low
         //         0.042386, // 3 close
-        //         0.93734243, // 4 volume
+        //         1374.66736, // 4 quote-volume
         //         1611514800, // 5 timestamp
+        //         32421.4, // 6 base-volume
         //     )
         //
         return array(
-            $this->safe_timestamp($ohlcv, 5),
-            $this->safe_number($ohlcv, 0),
-            $this->safe_number($ohlcv, 1),
-            $this->safe_number($ohlcv, 2),
-            $this->safe_number($ohlcv, 3),
-            $this->safe_number($ohlcv, 4),
+            $this->safe_integer($ohlcv, 5), // timestamp
+            $this->safe_number($ohlcv, 0), // open
+            $this->safe_number($ohlcv, 1), // high
+            $this->safe_number($ohlcv, 2), // low
+            $this->safe_number($ohlcv, 3), // close
+            $this->safe_number($ohlcv, 6), // base-volume
         );
     }
 
@@ -1115,9 +1112,8 @@ class aax extends Exchange {
         //
         //     {
         //         "data":[
-        //             [0.042398,0.042684,0.042366,0.042386,0.93734243,1611514800],
-        //             [0.042386,0.042602,0.042234,0.042373,1.01925239,1611518400],
-        //             [0.042373,0.042558,0.042362,0.042389,0.93801705,1611522000],
+        //             [0.042398,0.042684,0.042366,0.042386,1374.66736,1611514800,32421.4],
+        //             ...
         //         ],
         //         "success":true,
         //         "t":1611875157
@@ -1599,6 +1595,47 @@ class aax extends Exchange {
         //
         $data = $this->safe_value($response, 'data', array());
         return $this->parse_order($data, $market);
+    }
+
+    public function cancel_orders($ids, $symbol = null, $params = array ()) {
+        /**
+         * cancel all open orders in a $market
+         * @param {string} $symbol unified $market $symbol
+         * @param {array} $params extra parameters specific to the aax api endpoint
+         * @return {[array]} raw data of order $ids queued for cancelation
+         */
+        if ($symbol === null) {
+            throw new ArgumentsRequired($this->id . ' cancelOrders() requires a $symbol argument');
+        }
+        $this->load_markets();
+        $market = $this->market($symbol);
+        $request = array(
+            'symbol' => $market['id'],
+        );
+        $method = null;
+        if ($market['spot']) {
+            $method = 'privateDeleteSpotOrdersCancelAll';
+        } elseif ($market['contract']) {
+            $method = 'privateDeleteFuturesOrdersCancelAll';
+        }
+        $clientOrderIds = $this->safe_value($params, 'clientOrderIds');
+        // cannot cancel both by orderId and clientOrderId in the same $request
+        // aax throws an error saying order not found
+        if ($clientOrderIds !== null) {
+            $params = $this->omit($params, array( 'clientOrderIds' ));
+            $request['clOrdID'] = implode(',', $clientOrderIds);
+        } elseif ($ids !== null) {
+            $request['orderID'] = implode(',', $ids);
+        }
+        //
+        //  {
+        //      "code" => 1,
+        //      "data" => array( "2gaB7mSf72", "2gaB79T5UA" ),
+        //      "message" => "success",
+        //      "ts" => 1663021367883
+        //  }
+        //
+        return $this->$method (array_merge($request, $params));
     }
 
     public function cancel_all_orders($symbol = null, $params = array ()) {
@@ -2290,7 +2327,7 @@ class aax extends Exchange {
         //     "ts" => 1573561743499
         // }
         $data = $this->safe_value($response, 'data', array());
-        return $this->parse_transactions($data, $code, $since, $limit);
+        return $this->parse_transactions($data, $currency, $since, $limit);
     }
 
     public function fetch_withdrawals($code = null, $since = null, $limit = null, $params = array ()) {
@@ -2341,7 +2378,7 @@ class aax extends Exchange {
         //     "ts":1573561743499
         //  }
         $data = $this->safe_value($response, 'data', array());
-        return $this->parse_transactions($data, $code, $since, $limit);
+        return $this->parse_transactions($data, $currency, $since, $limit);
     }
 
     public function parse_transaction_status_by_type($status, $type = null) {
@@ -2865,6 +2902,7 @@ class aax extends Exchange {
         $marginRatio = Precise::string_div($maintenanceMargin, $collateral);
         return array(
             'info' => $position,
+            'id' => null,
             'symbol' => $this->safe_string($market, 'symbol'),
             'timestamp' => $timestamp,
             'datetime' => $this->iso8601($timestamp),
