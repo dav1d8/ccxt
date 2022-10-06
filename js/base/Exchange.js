@@ -2646,7 +2646,7 @@ module.exports = class Exchange {
         if (precision === undefined) {
             return fee;
         } else {
-            return this.decimalToPrecision (fee, ROUND, precision, this.precisionMode, this.paddingMode);
+            return this.decimalToPrecision (fee, TRUNCATE, precision, this.precisionMode, this.paddingMode);
         }
     }
 
@@ -2747,7 +2747,7 @@ module.exports = class Exchange {
         return this.filterByValueSinceLimit (array, 'currency', code, since, limit, 'timestamp', tail);
     }
 
-    parseTickers (tickers, symbols = undefined, params = {}) {
+    parseTickers (tickers, symbols = undefined) {
         //
         // the value of tickers is either a dict or a list
         //
@@ -2772,7 +2772,7 @@ module.exports = class Exchange {
         const results = [];
         if (Array.isArray (tickers)) {
             for (let i = 0; i < tickers.length; i++) {
-                const ticker = this.extend (this.parseTicker (tickers[i]), params);
+                const ticker = this.parseTicker (tickers[i]);
                 results.push (ticker);
             }
         } else {
@@ -2780,7 +2780,7 @@ module.exports = class Exchange {
             for (let i = 0; i < marketIds.length; i++) {
                 const marketId = marketIds[i];
                 const market = this.safeMarket (marketId);
-                const ticker = this.extend (this.parseTicker (tickers[marketId], market), params);
+                const ticker = this.parseTicker (tickers[marketId], market);
                 results.push (ticker);
             }
         }
