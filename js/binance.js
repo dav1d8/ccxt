@@ -1542,12 +1542,12 @@ module.exports = class binance extends Exchange {
             const id = this.safeString (entry, 'coin');
             const name = this.safeString (entry, 'name');
             const code = this.safeCurrencyCode (id);
-            let minPrecision = undefined;
             let isWithdrawEnabled = true;
             let isDepositEnabled = true;
             const networkList = this.safeValue (entry, 'networkList', []);
             const fees = {};
             let fee = undefined;
+            let maxPrecision = undefined;
             for (let j = 0; j < networkList.length; j++) {
                 const networkItem = networkList[j];
                 const network = this.safeString (networkItem, 'network');
@@ -1562,24 +1562,23 @@ module.exports = class binance extends Exchange {
                 if (isDefault || (fee === undefined)) {
                     fee = withdrawFee;
                 }
-                const precisionTick = this.safeString (networkItem, 'withdrawIntegerMultiple');
-                // avoid zero values, which are mostly from fiat or leveraged tokens : https://github.com/ccxt/ccxt/pull/14902#issuecomment-1271636731
-                // so, when there is zero instead of i.e. 0.001, then we skip those cases, because we don't know the precision - it might be because of network is suspended or other reasons
-                if (!Precise.stringEq (precisionTick, '0')) {
-                    minPrecision = (minPrecision === undefined) ? precisionTick : Precise.stringMin (minPrecision, precisionTick);
+                // precision:
+                const precisionValue = this.safeString (networkItem, 'withdrawIntegerMultiple');
+                if (maxPrecision === undefined) {
+                    maxPrecision = precisionValue;
+                } else if (maxPrecision === "0" || precisionValue === "0") {
+                    maxPrecision = Precise.stringMax(maxPrecision, precisionValue);
+                } else {
+                    maxPrecision = Precise.stringMin(maxPrecision, precisionValue);
                 }
             }
             const trading = this.safeValue (entry, 'trading');
             const active = (isWithdrawEnabled && isDepositEnabled && trading);
-            let maxDecimalPlaces = undefined;
-            if (minPrecision !== undefined) {
-                maxDecimalPlaces = parseInt (this.numberToString (this.precisionFromString (minPrecision)));
-            }
             result[code] = {
                 'id': id,
                 'name': name,
                 'code': code,
-                'precision': maxDecimalPlaces,
+                'precision': this.parseNumber (this.numberToString (this.precisionFromString (maxPrecision))),
                 'info': entry,
                 'active': active,
                 'deposit': isDepositEnabled,
