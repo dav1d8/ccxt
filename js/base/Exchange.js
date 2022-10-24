@@ -623,12 +623,13 @@ module.exports = class Exchange {
             }
             return this.markets
         }
-        let currencies = undefined
+        //NOTE: We fetch currencies and markets at the same time, first the currencies, so that they run together
+        const promises = [];
         // only call if exchange API provides endpoint (true), thus avoid emulated versions ('emulated')
-        if (this.has.fetchCurrencies === true) {
-            currencies = await this.fetchCurrencies ()
-        }
-        const markets = await this.fetchMarkets (params)
+        promises.push(this.has.fetchCurrencies === true ? this.fetchCurrencies () : Promise.resolve(undefined))
+        promises.push(this.fetchMarkets (params));
+
+        const [currencies, markets] = await Promise.all(promises);
         return this.setMarkets (markets, currencies)
     }
 

@@ -685,8 +685,11 @@ module.exports = class gate extends Exchange {
     }
 
     async fetchSpotMarkets (params) {
-        const marginResponse = await this.publicMarginGetCurrencyPairs (params);
-        const spotMarketsResponse = await this.publicSpotGetCurrencyPairs (params);
+        const promises = [
+            this.publicMarginGetCurrencyPairs (params),
+            this.publicSpotGetCurrencyPairs (params),
+        ];
+        const [marginResponse, spotMarketsResponse] = await Promise.all(promises);
         const marginMarkets = this.indexBy (marginResponse, 'id');
         //
         //  Spot
