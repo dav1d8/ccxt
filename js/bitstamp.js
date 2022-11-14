@@ -66,6 +66,7 @@ module.exports = class bitstamp extends Exchange {
                 'fetchPositions': false,
                 'fetchPositionsRisk': false,
                 'fetchPremiumIndexOHLCV': false,
+                'fetchTickers': true,
                 'fetchTicker': true,
                 'fetchTrades': true,
                 'fetchTradingFee': true,
@@ -112,6 +113,7 @@ module.exports = class bitstamp extends Exchange {
                         'ohlc/{pair}/': 1,
                         'order_book/{pair}/': 1,
                         'ticker_hour/{pair}/': 1,
+                        'ticker/': 1,
                         'ticker/{pair}/': 1,
                         'transactions/{pair}/': 1,
                         'trading-pairs-info/': 1,
@@ -676,6 +678,19 @@ module.exports = class bitstamp extends Exchange {
             'quoteVolume': quoteVolume,
             'info': ticker,
         }, market);
+    }
+
+    async fetchTickers (symbols = undefined, params = {}) {
+        /**
+         * @method
+         * @name bitstamp#fetchTickers
+         * @description fetches a price ticker, a statistical calculation with the information calculated over the past 24 hours for a specific market
+         * @param {object} params extra parameters specific to the bitstamp api endpoint
+         * @returns {object} a [ticker structure]{@link https://docs.ccxt.com/en/latest/manual.html#ticker-structure}
+         */
+        await this.loadMarkets ();
+        const tickers = await this.publicGetTicker (params);
+        return this.parseTickers (tickers, symbols);
     }
 
     async fetchTicker (symbol, params = {}) {
