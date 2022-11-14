@@ -765,7 +765,7 @@ module.exports = class bybit extends Exchange {
             'options': {
                 'createMarketBuyOrderRequiresPrice': true,
                 'createUnifiedMarginAccount': false,
-                'defaultType': 'swap',  // 'swap', 'future', 'option', 'spot'
+                'defaultType': 'spot',  // 'swap', 'future', 'option', 'spot'
                 'defaultSubType': 'linear',  // 'linear', 'inverse'
                 'defaultSettle': 'USDT', // USDC for USDC settled markets
                 'code': 'BTC',
