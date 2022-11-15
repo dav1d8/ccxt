@@ -55,6 +55,7 @@ module.exports = class coinbasepro extends Exchange {
                 'fetchTrades': true,
                 'fetchTradingFee': false,
                 'fetchTradingFees': true,
+                'fetchTransactionFee': true,
                 'fetchTransactions': true,
                 'fetchWithdrawals': true,
                 'withdraw': true,
@@ -266,6 +267,35 @@ module.exports = class coinbasepro extends Exchange {
             const details = this.safeValue (currency, 'details', {});
             const status = this.safeString (currency, 'status');
             const active = (status === 'online');
+            const supportedNetworks = this.safeValue(currency, 'supported_networks', []);
+            const networks = {};
+            for (let j = 0; j < supportedNetworks.length; j++) {
+                const supportedNetwork = supportedNetworks[j];
+                const networkId = this.safeString(supportedNetwork, 'id');
+                const network = this.safeNetwork(networkId);
+                const networkStatus = this.safeString(supportedNetwork, 'status');
+                const networkName = this.safeString(supportedNetwork, 'name');
+                const networkActive = (networkStatus === 'online');
+                const withdrawMin = this.safeNumber(supportedNetwork, 'min_withdrawal_amount');
+                const withdrawMax = this.safeNumber(supportedNetwork, 'max_withdrawal_amount');
+                const minConfirm = this.safeNumber(supportedNetwork, 'network_confirmations');
+                const contractAddress = this.safeString(supportedNetwork, 'contract_address');
+                networks[network] = {
+                    id: networkId,
+                    network: network,
+                    name: networkName,
+                    active: networkActive,
+                    deposit: undefined,
+                    withdraw: undefined,
+                    fee: undefined,
+                    precision: undefined,
+                    contractAddress: contractAddress,
+                    minConfirm: minConfirm,
+                    limits: {
+                        withdraw: { min: withdrawMin, max: withdrawMax },
+                    },
+                };
+            }
             result[code] = {
                 'id': id,
                 'code': code,
@@ -277,6 +307,7 @@ module.exports = class coinbasepro extends Exchange {
                 'withdraw': undefined,
                 'fee': undefined,
                 'precision': this.safeNumber (currency, 'max_precision'),
+                'networks': networks,
                 'limits': {
                     'amount': {
                         'min': this.safeNumber (details, 'min_size'),
@@ -1488,6 +1519,40 @@ module.exports = class coinbasepro extends Exchange {
             response[i]['currency'] = code;
         }
         return this.parseLedger (response, currency, since, limit);
+    }
+
+    async fetchTransactionFee (code, params = {}) {
+        /**
+         * @method
+         * @name coinbasepro#fetchTransactionFee
+         * @description fetch the fee for a transaction
+         * @param {string} code unified currency code
+         * @param {object} params extra parameters specific to the coinbasepro api endpoint
+         * @returns {object} a [fee structure]{@link https://docs.ccxt.com/en/latest/manual.html#fee-structure}
+         */
+        await this.loadMarkets ();
+        const currency = this.currency (code);
+        const request = {
+            'currency': currency['id'],
+        };
+        const networks = this.safeValue (currency, 'networks', {});
+        let network = this.safeString (params, 'network');
+        if (network !== undefined) {
+            network = this.safeValue (networks, network);
+            if (network !== undefined) {
+                request['network'] = network.id;
+                request['crypto_address'] = network.contractAddress;
+                params = this.omit(params, 'network');
+            }
+        }
+        const response = await this.privateGetWithdrawalsFeeEstimate (this.extend (request, params));
+        const withdrawFees = {};
+        withdrawFees[code] = this.safeNumber (response, 'fee');
+        return {
+            'info': response,
+            'withdraw': withdrawFees,
+            'deposit': {},
+        };
     }
 
     async fetchTransactions (code = undefined, since = undefined, limit = undefined, params = {}) {
