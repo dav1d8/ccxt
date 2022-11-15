@@ -1277,9 +1277,9 @@ module.exports = class okx extends Exchange {
                 } else if (!canWithdraw) {
                     withdrawEnabled = false;
                 }
-                if ((networkId !== undefined) && (networkId.indexOf ('-') >= 0)) {
-                    const parts = networkId.split ('-');
-                    const chainPart = this.safeString (parts, 1, networkId);
+                const posHyphen  = networkId.indexOf ('-');
+                if ((networkId !== undefined) && (posHyphen >= 0)) {
+                    const chainPart = networkId.substring(posHyphen + 1);
                     const networkCode = this.safeNetwork (chainPart);
                     const precision = this.parsePrecision (this.safeString (chain, 'wdTickSz'));
                     if (maxPrecision === undefined) {
