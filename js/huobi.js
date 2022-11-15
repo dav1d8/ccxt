@@ -2839,11 +2839,12 @@ module.exports = class huobi extends Exchange {
             let withdraw = undefined;
             for (let j = 0; j < chains.length; j++) {
                 const chainEntry = chains[j];
-                const uniqueChainId = this.safeString (chainEntry, 'chain'); // i.e. usdterc20, trc20usdt ...
-                const title = this.safeString (chainEntry, 'displayName');
-                this.options['networkChainIdsByNames'][code][title] = uniqueChainId;
-                this.options['networkNamesByChainIds'][uniqueChainId] = title;
-                const networkCode = this.networkIdToCode (title, code);
+                const networkId = this.safeString (chainEntry, 'chain');
+                let baseChain = this.safeString (chainEntry, 'baseChain');
+                let baseChainProtocol = this.safeString (chainEntry, 'baseChainProtocol');
+                let displayName = this.safeString (chainEntry, 'displayName');
+                const networkIdAlt = displayName + "_" + baseChainProtocol + "_" + baseChain + "_" + networkId;
+                const networkCode = this.safeNetwork (displayName, currencyId, baseChainProtocol, baseChain);
                 minWithdraw = this.safeNumber (chainEntry, 'minWithdrawAmt');
                 maxWithdraw = this.safeNumber (chainEntry, 'maxWithdrawAmt');
                 const withdrawStatus = this.safeString (chainEntry, 'withdrawStatus');
@@ -2868,7 +2869,8 @@ module.exports = class huobi extends Exchange {
                 const fee = this.safeNumber (chainEntry, 'transactFeeWithdraw');
                 networks[networkCode] = {
                     'info': chainEntry,
-                    'id': uniqueChainId,
+                    'id': networkId,
+                    'idAlt': networkIdAlt,
                     'network': networkCode,
                     'limits': {
                         'withdraw': {
@@ -4750,6 +4752,56 @@ module.exports = class huobi extends Exchange {
         //     }
         //
         return response;
+    }
+
+    safeNetwork (displayName, currencyId, baseChainProtocol, baseChain) {
+        let networkId = baseChain;
+        if (baseChain === undefined) {
+            networkId = displayName;
+        }
+        if (baseChain === "NEO" && displayName === "GASN3") {
+            networkId = displayName;
+        }
+        const chains = {
+            "ERC20": "ETH",
+            "BEP20": "BSC",
+            "TRC20": "TRX",
+            "HRC20": "HECO",
+            "NRC20": "NAS",
+            "IRC20": "IOST",
+            "PRC20": "MATIC",
+            "CHZ20": "CHZ",
+            "CRC20": "CHZ",
+            "KIP7": "KLAY",
+            "HECO": "HECO",
+            "ALGO": "ALGO",
+            "CUBE": "CUBE",
+        }
+        currencyId = currencyId.toUpperCase();
+        for(const chain in chains) {
+            const chainMapped = chains[chain];
+            if (displayName === chain + currencyId) {
+                networkId = chainMapped;
+            }
+        }
+        if (networkId === currencyId + "1") {
+            networkId = currencyId;
+        }
+        const networksById = {
+            "AVAXCCHAIN": "AVAXC",
+            "CCHAIN": "AVAXC",
+            "SOLANA": "SOL",
+            "ARB": "ARBITRUM",
+            "WAX1": "WAXP",
+            "NEON3": "NEO3",
+            "XZC": "FIRO",
+            "GASN3": "NEO3",
+            "ONTOLOGY": "ONT",
+            "OP": "OPTIMISM",
+            "CZH": "CHZ",
+            'TERRA': "LUNC",
+        };
+        return this.safeString (networksById, networkId, networkId);
     }
 
     parseDepositAddress (depositAddress, currency = undefined) {
