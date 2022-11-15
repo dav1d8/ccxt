@@ -1743,8 +1743,9 @@ module.exports = class gate extends Exchange {
             } else {
                 const chainKeys = Object.keys (withdrawFixOnChains);
                 for (let i = 0; i < chainKeys.length; i++) {
-                    const chainKey = chainKeys[i];
-                    withdrawFees[chainKey] = this.parseNumber (withdrawFixOnChains[chainKey]);
+                    const networkId = chainKeys[i];
+                    const network = this.safeNetwork(networkId);
+                    withdrawFees[network] = this.parseNumber (withdrawFixOnChains[networkId]);
                 }
             }
             result[code] = {
