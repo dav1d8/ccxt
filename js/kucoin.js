@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 
 const Exchange = require ('./base/Exchange');
-const { ExchangeError, ExchangeNotAvailable, InsufficientFunds, OrderNotFound, InvalidOrder, ArgumentsRequired, AccountSuspended, InvalidNonce, NotSupported, BadRequest, AuthenticationError, BadSymbol, RateLimitExceeded, PermissionDenied, InvalidAddress } = require ('./base/errors');
+const { ExchangeError, ExchangeNotAvailable, InsufficientFunds, OrderNotFound, InvalidOrder, AccountSuspended, InvalidNonce, NotSupported, BadRequest, AuthenticationError, BadSymbol, RateLimitExceeded, PermissionDenied, InvalidAddress } = require ('./base/errors');
 const { TICK_SIZE } = require ('./base/functions/number');
 const Precise = require ('./base/Precise');
 
@@ -21,7 +21,7 @@ module.exports = class kucoin extends Exchange {
             // 60 requests in 3 seconds = 20 requests per second => ( 1000ms / 20 ) = 50 ms between requests on average
             'rateLimit': 50,
             'version': 'v2',
-            'certified': false,
+            'certified': true,
             'pro': true,
             'comment': 'Platform 2.0',
             'quoteJsonNumbers': false,
@@ -87,7 +87,7 @@ module.exports = class kucoin extends Exchange {
             },
             'urls': {
                 'logo': 'https://user-images.githubusercontent.com/51840849/87295558-132aaf80-c50e-11ea-9801-a2fb0c57c799.jpg',
-                'referral': 'https://www.kucoin.com/?rcode=E5wkqe',
+                'referral': 'https://www.kucoin.com/ucenter/signup?rcode=E5wkqe',
                 'api': {
                     'public': 'https://api.kucoin.com',
                     'private': 'https://api.kucoin.com',
@@ -434,6 +434,7 @@ module.exports = class kucoin extends Exchange {
                         'POST': {
                             'accounts/inner-transfer': 'v2',
                             'accounts/sub-transfer': 'v2',
+                            'accounts': 'v2',
                         },
                     },
                     'futuresPrivate': {
@@ -1157,18 +1158,22 @@ module.exports = class kucoin extends Exchange {
         // BCH {"code":"200000","data":{"address":"bitcoincash:qza3m4nj9rx7l9r0cdadfqxts6f92shvhvr5ls4q7z","memo":""}}
         // BTC {"code":"200000","data":{"address":"36SjucKqQpQSvsak9A7h6qzFjrVXpRNZhE","memo":""}}
         const data = this.safeValue (response, 'data', {});
-        const address = this.safeString (data, 'address');
-        const tag = this.safeString (data, 'memo');
+        return this.parseDepositAddress (data, currency);
+    }
+
+    parseDepositAddress (depositAddress, currency = undefined) {
+        const address = this.safeString (depositAddress, 'address');
+        const code = currency['id'];
         if (code !== 'NIM') {
             // contains spaces
             this.checkAddress (address);
         }
         return {
-            'info': response,
+            'info': depositAddress,
             'currency': code,
             'address': address,
-            'tag': tag,
-            'network': network,
+            'tag': this.safeString (depositAddress, 'memo'),
+            'network': this.safeString (depositAddress, 'chain'),
         };
     }
 
@@ -2098,6 +2103,7 @@ module.exports = class kucoin extends Exchange {
         //         "amount": 1,
         //         "fee": 0.0001,
         //         "currency": "KCS",
+        //         "chain": "",
         //         "isInner": false,
         //         "walletTxId": "5bbb57386d99522d9f954c5a@test004",
         //         "status": "SUCCESS",
@@ -2113,6 +2119,7 @@ module.exports = class kucoin extends Exchange {
         //         "address": "0x5bedb060b8eb8d823e2414d82acce78d38be7fe9",
         //         "memo": "",
         //         "currency": "ETH",
+        //         "chain": "",
         //         "amount": 1.0000000,
         //         "fee": 0.0100000,
         //         "walletTxId": "3e2414d82acce78d38be7fe9",
@@ -2175,12 +2182,13 @@ module.exports = class kucoin extends Exchange {
             }
         }
         const tag = this.safeString (transaction, 'memo');
+        const network = this.safeString (transaction, 'chain');
         return {
             'info': transaction,
             'id': this.safeString2 (transaction, 'id', 'withdrawalId'),
             'timestamp': timestamp,
             'datetime': this.iso8601 (timestamp),
-            'network': undefined,
+            'network': network,
             'address': address,
             'addressTo': address,
             'addressFrom': undefined,
@@ -2347,33 +2355,105 @@ module.exports = class kucoin extends Exchange {
         return this.parseTransactions (responseData, currency, since, limit, { 'type': 'withdrawal' });
     }
 
+    fetchBalanceHelper (entry) {
+        const account = this.account ();
+        account['used'] = this.safeString (entry, 'holdBalance');
+        account['free'] = this.safeString (entry, 'availableBalance');
+        account['total'] = this.safeString (entry, 'totalBalance');
+        return account;
+    }
+
     async fetchBalance (params = {}) {
         /**
          * @method
          * @name kucoin#fetchBalance
          * @description query for balance and get the amount of funds available for trading or funds locked in orders
+         * @see https://docs.kucoin.com/#list-accounts
+         * @see https://docs.kucoin.com/#query-isolated-margin-account-info
          * @param {object} params extra parameters specific to the kucoin api endpoint
+         * @param {object} params.marginMode 'cross' or 'isolated', margin type for fetching margin balance
+         * @param {object} params.type extra parameters specific to the kucoin api endpoint
          * @returns {object} a [balance structure]{@link https://docs.ccxt.com/en/latest/manual.html?#balance-structure}
          */
         await this.loadMarkets ();
+        const code = this.safeString (params, 'code');
+        let currency = undefined;
+        if (code !== undefined) {
+            currency = this.currency (code);
+        }
         const defaultType = this.safeString2 (this.options, 'fetchBalance', 'defaultType', 'spot');
         const requestedType = this.safeString (params, 'type', defaultType);
         const accountsByType = this.safeValue (this.options, 'accountsByType');
         const type = this.safeString (accountsByType, requestedType, requestedType);
         params = this.omit (params, 'type');
-        const request = {
-            'type': type,
-        };
-        const response = await this.privateGetAccounts (this.extend (request, params));
+        const [ marginMode, query ] = this.handleMarginModeAndParams ('fetchBalance', params);
+        let method = 'privateGetAccounts';
+        const request = {};
+        const isolated = (marginMode === 'isolated') || (type === 'isolated');
+        if (isolated) {
+            method = 'privateGetIsolatedAccounts';
+            if (currency !== undefined) {
+                request['balanceCurrency'] = currency['id'];
+            }
+        } else {
+            if (currency !== undefined) {
+                request['currency'] = currency['id'];
+            }
+            request['type'] = type;
+        }
+        const response = await this[method] (this.extend (request, query));
         //
-        //     {
-        //         "code":"200000",
-        //         "data":[
-        //             {"balance":"0.00009788","available":"0.00009788","holds":"0","currency":"BTC","id":"5c6a4fd399a1d81c4f9cc4d0","type":"trade"},
-        //             {"balance":"3.41060034","available":"3.41060034","holds":"0","currency":"SOUL","id":"5c6a4d5d99a1d8182d37046d","type":"trade"},
-        //             {"balance":"0.01562641","available":"0.01562641","holds":"0","currency":"NEO","id":"5c6a4f1199a1d8165a99edb1","type":"trade"},
-        //         ]
-        //     }
+        // Spot and Cross
+        //
+        //    {
+        //        "code": "200000",
+        //        "data": [
+        //            {
+        //                "balance": "0.00009788",
+        //                "available": "0.00009788",
+        //                "holds": "0",
+        //                "currency": "BTC",
+        //                "id": "5c6a4fd399a1d81c4f9cc4d0",
+        //                "type": "trade",
+        //            },
+        //        ]
+        //    }
+        //
+        // Isolated
+        //
+        //    {
+        //        code: '200000',
+        //        data: {
+        //            totalConversionBalance: '0',
+        //            liabilityConversionBalance: '0',
+        //            assets: [
+        //                {
+        //                    symbol: 'MANA-USDT',
+        //                    status: 'CLEAR',
+        //                    debtRatio: '0',
+        //                    baseAsset: {
+        //                        currency: 'MANA',
+        //                        totalBalance: '0',
+        //                        holdBalance: '0',
+        //                        availableBalance: '0',
+        //                        liability: '0',
+        //                        interest: '0',
+        //                        borrowableAmount: '0'
+        //                    },
+        //                    quoteAsset: {
+        //                        currency: 'USDT',
+        //                        totalBalance: '0',
+        //                        holdBalance: '0',
+        //                        availableBalance: '0',
+        //                        liability: '0',
+        //                        interest: '0',
+        //                        borrowableAmount: '0'
+        //                    }
+        //                },
+        //                ...
+        //            ]
+        //        }
+        //    }
         //
         const data = this.safeValue (response, 'data', []);
         const result = {
@@ -2381,20 +2461,37 @@ module.exports = class kucoin extends Exchange {
             'timestamp': undefined,
             'datetime': undefined,
         };
-        for (let i = 0; i < data.length; i++) {
-            const balance = data[i];
-            const balanceType = this.safeString (balance, 'type');
-            if (balanceType === type) {
-                const currencyId = this.safeString (balance, 'currency');
-                const code = this.safeCurrencyCode (currencyId);
-                const account = this.account ();
-                account['total'] = this.safeString (balance, 'balance');
-                account['free'] = this.safeString (balance, 'available');
-                account['used'] = this.safeString (balance, 'holds');
-                result[code] = account;
+        if (isolated) {
+            const assets = this.safeValue (data, 'assets', []);
+            for (let i = 0; i < assets.length; i++) {
+                const entry = assets[i];
+                const marketId = this.safeString (entry, 'symbol');
+                const symbol = this.safeSymbol (marketId, undefined, '_');
+                const base = this.safeValue (entry, 'baseAsset', {});
+                const quote = this.safeValue (entry, 'quoteAsset', {});
+                const baseCode = this.safeCurrencyCode (this.safeString (base, 'currency'));
+                const quoteCode = this.safeCurrencyCode (this.safeString (quote, 'currency'));
+                const subResult = {};
+                subResult[baseCode] = this.fetchBalanceHelper (base);
+                subResult[quoteCode] = this.fetchBalanceHelper (quote);
+                result[symbol] = this.safeBalance (subResult);
+            }
+        } else {
+            for (let i = 0; i < data.length; i++) {
+                const balance = data[i];
+                const balanceType = this.safeString (balance, 'type');
+                if (balanceType === type) {
+                    const currencyId = this.safeString (balance, 'currency');
+                    const code = this.safeCurrencyCode (currencyId);
+                    const account = this.account ();
+                    account['total'] = this.safeString (balance, 'balance');
+                    account['free'] = this.safeString (balance, 'available');
+                    account['used'] = this.safeString (balance, 'holds');
+                    result[code] = account;
+                }
             }
         }
-        return this.safeBalance (result);
+        return isolated ? result : this.safeBalance (result);
     }
 
     async transfer (code, amount, fromAccount, toAccount, params = {}) {
@@ -3035,24 +3132,22 @@ module.exports = class kucoin extends Exchange {
          * @param {string|undefined} params.marginMode 'cross' or 'isolated' default is 'cross'
          * @returns {object} a [margin loan structure]{@link https://docs.ccxt.com/en/latest/manual.html#margin-loan-structure}
          */
+        const marginMode = this.safeString (params, 'marginMode'); // cross or isolated
+        params = this.omit (params, 'marginMode');
+        this.checkRequiredMarginArgument ('borrowMargin', symbol, marginMode);
         await this.loadMarkets ();
         const currency = this.currency (code);
         const request = {
             'currency': currency['id'],
             'size': this.currencyToPrecision (code, amount),
         };
-        let marginMode = undefined;
-        [ marginMode, params ] = this.handleMarginModeAndParams ('borrowMargin', params);
-        if (marginMode === undefined) {
-            marginMode = 'cross'; // cross as default marginMode
-        }
-        let method = 'privatePostMarginBorrow';
+        let method = undefined;
         const timeInForce = this.safeStringN (params, [ 'timeInForce', 'type', 'borrowStrategy' ], 'IOC');
-        let timeInForceRequest = 'type';
-        if (marginMode === 'isolated') {
-            if (symbol === undefined) {
-                throw new ArgumentsRequired (this.id + ' borrowMargin() requires a symbol argument for isolated margin');
-            }
+        let timeInForceRequest = undefined;
+        if (symbol === undefined) {
+            method = 'privatePostMarginBorrow';
+            timeInForceRequest = 'type';
+        } else {
             const market = this.market (symbol);
             request['symbol'] = market['id'];
             timeInForceRequest = 'borrowStrategy';
@@ -3084,12 +3179,7 @@ module.exports = class kucoin extends Exchange {
         //     }
         //
         const data = this.safeValue (response, 'data', {});
-        const transaction = this.parseMarginLoan (data, currency);
-        if (marginMode === 'cross') {
-            return this.extend (transaction, { 'amount': amount });
-        } else {
-            return this.extend (transaction, { 'symbol': symbol });
-        }
+        return this.parseMarginLoan (data, currency);
     }
 
     async repayMargin (code, amount, symbol = undefined, params = {}) {
@@ -3108,6 +3198,9 @@ module.exports = class kucoin extends Exchange {
          * @param {string|undefined} params.marginMode 'cross' or 'isolated' default is 'cross'
          * @returns {object} a [margin loan structure]{@link https://docs.ccxt.com/en/latest/manual.html#margin-loan-structure}
          */
+        const marginMode = this.safeString (params, 'marginMode'); // cross or isolated
+        params = this.omit (params, 'marginMode');
+        this.checkRequiredMarginArgument ('repayMargin', symbol, marginMode);
         await this.loadMarkets ();
         const currency = this.currency (code);
         const request = {
@@ -3116,18 +3209,13 @@ module.exports = class kucoin extends Exchange {
             // 'sequence': 'RECENTLY_EXPIRE_FIRST',  // Cross: 'RECENTLY_EXPIRE_FIRST' or 'HIGHEST_RATE_FIRST'
             // 'seqStrategy': 'RECENTLY_EXPIRE_FIRST',  // Isolated: 'RECENTLY_EXPIRE_FIRST' or 'HIGHEST_RATE_FIRST'
         };
-        let marginMode = undefined;
-        [ marginMode, params ] = this.handleMarginModeAndParams ('repayMargin', params);
-        if (marginMode === undefined) {
-            marginMode = 'cross'; // cross as default marginMode
-        }
-        let method = 'privatePostMarginRepayAll';
+        let method = undefined;
         const sequence = this.safeString2 (params, 'sequence', 'seqStrategy', 'RECENTLY_EXPIRE_FIRST');
-        let sequenceRequest = 'sequence';
-        if (marginMode === 'isolated') {
-            if (symbol === undefined) {
-                throw new ArgumentsRequired (this.id + ' repayMargin() requires a symbol argument for isolated margin');
-            }
+        let sequenceRequest = undefined;
+        if (symbol === undefined) {
+            method = 'privatePostMarginRepayAll';
+            sequenceRequest = 'sequence';
+        } else {
             const market = this.market (symbol);
             request['symbol'] = market['id'];
             sequenceRequest = 'seqStrategy';
@@ -3142,11 +3230,7 @@ module.exports = class kucoin extends Exchange {
         //         "data": null
         //     }
         //
-        const transaction = this.parseMarginLoan (response, currency);
-        return this.extend (transaction, {
-            'amount': amount,
-            'symbol': symbol,
-        });
+        return this.parseMarginLoan (response, currency);
     }
 
     parseMarginLoan (info, currency = undefined) {
@@ -3202,6 +3286,11 @@ module.exports = class kucoin extends Exchange {
         const query = this.omit (params, this.extractParams (path));
         let endpart = '';
         headers = (headers !== undefined) ? headers : {};
+        let url = this.urls['api'][api];
+        const isSandbox = url.indexOf ('sandbox') >= 0;
+        if (path === 'symbols' && !isSandbox) {
+            endpoint = '/api/v2/' + this.implodeParams (path, params);
+        }
         if (Object.keys (query).length) {
             if ((method === 'GET') || (method === 'DELETE')) {
                 endpoint += '?' + this.rawencode (query);
@@ -3211,7 +3300,7 @@ module.exports = class kucoin extends Exchange {
                 headers['Content-Type'] = 'application/json';
             }
         }
-        const url = this.urls['api'][api] + endpoint;
+        url = url + endpoint;
         const isFuturePrivate = (api === 'futuresPrivate');
         const isPrivate = (api === 'private');
         if (isPrivate || isFuturePrivate) {
