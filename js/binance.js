@@ -1416,6 +1416,13 @@ module.exports = class binance extends Exchange {
         return this.safeInteger (response, 'serverTime');
     }
 
+    safeNetwork (networkId) {
+        const networksById = {
+            "WAX": "WAXP",
+        };
+        return this.safeString (networksById, networkId, networkId);
+    }
+
     async fetchCurrencies (params = {}) {
         /**
          * @method
@@ -1542,21 +1549,24 @@ module.exports = class binance extends Exchange {
             const id = this.safeString (entry, 'coin');
             const name = this.safeString (entry, 'name');
             const code = this.safeCurrencyCode (id);
-            let isWithdrawEnabled = true;
-            let isDepositEnabled = true;
+            const networks = {};
+            let isWithdrawEnabled = undefined;
+            let isDepositEnabled = undefined;
             const networkList = this.safeValue (entry, 'networkList', []);
             const fees = {};
             let fee = undefined;
             let maxPrecision = undefined;
             for (let j = 0; j < networkList.length; j++) {
                 const networkItem = networkList[j];
-                const network = this.safeString (networkItem, 'network');
+                const networkId = this.safeString (networkItem, 'network');
+                const network = this.safeNetwork(networkId);
                 // const name = this.safeString (networkItem, 'name');
                 const withdrawFee = this.safeNumber (networkItem, 'withdrawFee');
                 const depositEnable = this.safeValue (networkItem, 'depositEnable');
                 const withdrawEnable = this.safeValue (networkItem, 'withdrawEnable');
-                isDepositEnabled = isDepositEnabled || depositEnable;
-                isWithdrawEnabled = isWithdrawEnabled || withdrawEnable;
+                const active = !!(depositEnable && withdrawEnable);
+                isDepositEnabled = isDepositEnabled === undefined || depositEnable ? depositEnable : isDepositEnabled;
+                isWithdrawEnabled = isWithdrawEnabled === undefined || withdrawEnable ? withdrawEnable : isWithdrawEnabled;
                 fees[network] = withdrawFee;
                 const isDefault = this.safeValue (networkItem, 'isDefault');
                 if (isDefault || (fee === undefined)) {
@@ -1571,6 +1581,22 @@ module.exports = class binance extends Exchange {
                 } else {
                     maxPrecision = Precise.stringMin(maxPrecision, precisionValue);
                 }
+                networks[network] = {
+                    id: networkId,
+                    network: network,
+                    active: active,
+                    deposit: depositEnable,
+                    withdraw: withdrawEnable,
+                    fee: withdrawFee,
+                    precision: this.precisionFromString (precisionValue),
+                    limits: {
+                        withdraw: {
+                            min: this.safeNumber(networkItem, "withdrawMin"),
+                            max: this.safeNumber(networkItem, "withdrawMax"),
+                        },
+                    },
+                    info: networkItem,
+                };
             }
             const trading = this.safeValue (entry, 'trading');
             const active = (isWithdrawEnabled && isDepositEnabled && trading);
@@ -1583,7 +1609,7 @@ module.exports = class binance extends Exchange {
                 'active': active,
                 'deposit': isDepositEnabled,
                 'withdraw': isWithdrawEnabled,
-                'networks': networkList,
+                'networks': networks,
                 'fee': fee,
                 'fees': fees,
                 'limits': this.limits,
