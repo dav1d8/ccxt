@@ -686,17 +686,21 @@ module.exports = class mexc3 extends Exchange {
     }
 
     safeNetwork (networkId) {
-        if (networkId.indexOf ('BSC') >= 0) {
-            return 'BEP20';
-        }
-        const parts = networkId.split (' ');
-        networkId = parts.join ('');
-        networkId = networkId.replace ('-20', '20');
         const networksById = {
-            'ETH': 'ETH',
-            'ERC20': 'ERC20',
-            'BEP20(BSC)': 'BEP20',
-            'TRX': 'TRC20',
+            'ERC20': 'ETH',
+            'BEP20(BSC)': 'BSC',
+            'TRC20': 'TRX',
+            'Chiliz Chain(CHZ)': 'CHZ',
+            'BEP2': 'BNB',
+            'AVAX_CCHAIN': 'AVAXC',
+            'Arbitrum One': 'ARBITRUM',
+            'LUNA2': 'LUNA',
+            'OP': 'OPTIMISM',
+            'AVAX_XCHAIN': 'AVAX',
+            'ACALA': 'ACA',
+            'NEM': 'XEM',
+            'APTOS': 'APT',
+            'WAX': 'WAXP',
         };
         return this.safeString (networksById, networkId, networkId);
     }
