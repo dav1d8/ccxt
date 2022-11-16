@@ -111,6 +111,7 @@ module.exports = class bybit extends Exchange {
                     'v2': 'https://api.{hostname}',
                     'public': 'https://api.{hostname}',
                     'private': 'https://api.{hostname}',
+                    'web': 'https://api2.{hostname}',
                 },
                 'www': 'https://www.bybit.com',
                 'doc': [
@@ -483,6 +484,11 @@ module.exports = class bybit extends Exchange {
                         'spot/order/batch-cancel-by-ids': 2.5,
                     },
                 },
+                'web': {
+                    'get': {
+                        'spot/api/crossmargin/v1/token/list': 1,
+                    }
+                }
             },
             'httpExceptions': {
                 '403': RateLimitExceeded, // Forbidden -- You request too many times
@@ -1071,7 +1077,11 @@ module.exports = class bybit extends Exchange {
     }
 
     async fetchSpotMarkets (params) {
-        const response = await this.publicGetSpotV3PublicSymbols (params);
+        const [response, response2] = await Promise.all([
+            this.publicGetSpotV3PublicSymbols (params),
+            this.webGetSpotApiCrossmarginV1TokenList ()
+        ]);
+        const crossMarginTokens = this.indexBy(response2.result, "tokenId");
         //
         //    {
         //        "retCode": "0",
@@ -1116,6 +1126,10 @@ module.exports = class bybit extends Exchange {
             const symbol = base + '/' + quote;
             const active = this.safeInteger (market, 'showStatus') === 1;
             const quotePrecision = this.safeNumber (market, 'quotePrecision');
+            const crossMarginToken = this.safeValue(crossMarginTokens, baseId);
+            const leverage = this.safeInteger(crossMarginToken, 'leverageRatio');
+            const margin = leverage !== undefined;
+            market["crossMarginToken"] = crossMarginToken;
             result.push ({
                 'id': id,
                 'symbol': symbol,
@@ -1127,7 +1141,11 @@ module.exports = class bybit extends Exchange {
                 'settleId': undefined,
                 'type': 'spot',
                 'spot': true,
-                'margin': undefined,
+                'margin': margin,
+                'crossMargin': margin,
+                'crossMaxLeverage': leverage,
+                'isolatedMargin': false,
+                'isolatedMaxLeverage': undefined,
                 'swap': false,
                 'future': false,
                 'option': false,
