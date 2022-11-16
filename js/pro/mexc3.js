@@ -289,7 +289,7 @@ module.exports = class mexc3 extends mexcRest {
         symbol = market['symbol'];
         const messageHash = 'orderbook' + ':' + symbol;
         const requestParams = {
-            'symbol': market['id'],
+            'symbol': market['baseId'] + "_" + market['quoteId'],
         };
         if (limit !== undefined) {
             if (limit !== 5 && limit !== 10 && limit !== 20) {
@@ -361,7 +361,7 @@ module.exports = class mexc3 extends mexcRest {
         //     "version":"1170951528"
         //  }
         //
-        const marketId = this.safeString (message, 'symbol');
+        const marketId = this.safeString (message, 'symbol').replace("_", "");
         const market = this.safeMarket (marketId);
         const symbol = market['symbol'];
         const data = this.safeValue (message, 'data');
