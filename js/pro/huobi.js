@@ -85,7 +85,8 @@ module.exports = class huobi extends huobiRest {
                 'tradesLimit': 1000,
                 'OHLCVLimit': 1000,
                 'api': 'api', // or api-aws for clients hosted on AWS
-                'maxOrderBookSyncAttempts': 3,
+                'fetchOrderBookSnapshotMaxAttempts': 5,
+                'fetchOrderBookSnapshotDelay': 1000,
                 'ws': {
                     'gunzip': true,
                 },
@@ -386,7 +387,7 @@ module.exports = class huobi extends huobiRest {
             const nonce = this.safeInteger (data, 'seqNum');
             snapshot['nonce'] = nonce;
             if ((sequence !== undefined) && (nonce < sequence)) {
-                const maxAttempts = this.safeInteger (this.options, 'maxOrderBookSyncAttempts', 3);
+                const maxAttempts = this.safeInteger (this.options, 'fetchOrderBookSnapshotMaxAttempts');
                 let numAttempts = this.safeInteger (subscription, 'numAttempts', 0);
                 // retry to synchronize if we have not reached maxAttempts yet
                 if (numAttempts < maxAttempts) {
@@ -395,7 +396,8 @@ module.exports = class huobi extends huobiRest {
                         numAttempts = this.sum (numAttempts, 1);
                         subscription['numAttempts'] = numAttempts;
                         client.subscriptions[messageHash] = subscription;
-                        this.spawn (this.watchOrderBookSnapshot, client, message, subscription);
+                        const delay = this.safeInteger (this.options, 'fetchOrderBookSnapshotDelay');
+                        this.delay (delay, this.watchOrderBookSnapshot, client, message, subscription);
                     }
                 } else {
                     // throw upon failing to synchronize in maxAttempts
