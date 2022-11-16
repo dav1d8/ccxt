@@ -2782,7 +2782,11 @@ module.exports = class huobi extends Exchange {
          * @param {object} params extra parameters specific to the huobi api endpoint
          * @returns {object} an associative dictionary of currencies
          */
-        const response = await this.spotPublicGetV2ReferenceCurrencies (params);
+        const [response, currencyResponse] = await Promise.all([
+            this.spotPublicGetV2ReferenceCurrencies (params),
+            this.spotPublicGetV2SettingsCommonCurrencies ()
+        ]);
+        const currenciesIndexed = this.indexBy (currencyResponse.data, 'cc');
         //
         //    {
         //        "code": 200,
@@ -2827,6 +2831,8 @@ module.exports = class huobi extends Exchange {
             const entry = data[i];
             const currencyId = this.safeString (entry, 'currency');
             const code = this.safeCurrencyCode (currencyId);
+            const currency = this.safeValue(currenciesIndexed, currencyId);
+            const name = this.safeString(currency, "fn");
             this.options['networkChainIdsByNames'][code] = {};
             const chains = this.safeValue (entry, 'chains', []);
             const networks = {};
@@ -2893,7 +2899,7 @@ module.exports = class huobi extends Exchange {
                 'deposit': deposit,
                 'withdraw': withdraw,
                 'fee': undefined,
-                'name': undefined,
+                'name': name,
                 'limits': {
                     'amount': {
                         'min': undefined,
