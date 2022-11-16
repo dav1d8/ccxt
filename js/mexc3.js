@@ -600,12 +600,12 @@ module.exports = class mexc3 extends Exchange {
             const id = this.safeString (currency, 'coin');
             const code = this.safeCurrencyCode (id);
             const name = this.safeString (currency, 'name');
-            let currencyActive = false;
+            let currencyActive = undefined;
             let currencyFee = undefined;
             let currencyWithdrawMin = undefined;
             let currencyWithdrawMax = undefined;
-            let depositEnabled = false;
-            let withdrawEnabled = false;
+            let depositEnabled = undefined;
+            let withdrawEnabled = undefined;
             const networks = {};
             const chains = this.safeValue (currency, 'networkList', []);
             for (let j = 0; j < chains.length; j++) {
@@ -615,7 +615,7 @@ module.exports = class mexc3 extends Exchange {
                 const isDepositEnabled = this.safeValue (chain, 'depositEnable', false);
                 const isWithdrawEnabled = this.safeValue (chain, 'withdrawEnable', false);
                 const active = (isDepositEnabled && isWithdrawEnabled);
-                currencyActive = active || currencyActive;
+                currencyActive = currencyActive === undefined || active ? active : currencyActive;
                 const withdrawMin = this.safeString (chain, 'withdrawMin');
                 const withdrawMax = this.safeString (chain, 'withdrawMax');
                 currencyWithdrawMin = (currencyWithdrawMin === undefined) ? withdrawMin : currencyWithdrawMin;
@@ -628,12 +628,8 @@ module.exports = class mexc3 extends Exchange {
                 if (Precise.stringLt (currencyWithdrawMax, withdrawMax)) {
                     currencyWithdrawMax = withdrawMax;
                 }
-                if (isDepositEnabled) {
-                    depositEnabled = true;
-                }
-                if (isWithdrawEnabled) {
-                    withdrawEnabled = true;
-                }
+                depositEnabled = depositEnabled === undefined || isDepositEnabled ? isDepositEnabled : depositEnabled;
+                withdrawEnabled = withdrawEnabled === undefined || isWithdrawEnabled ? isWithdrawEnabled : withdrawEnabled;
                 networks[network] = {
                     'info': chain,
                     'id': networkId,

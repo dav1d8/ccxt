@@ -987,6 +987,9 @@ module.exports = class bybit extends Exchange {
             const chains = this.safeValue (currency, 'chains', []);
             const networks = {};
             let minPrecision = undefined;
+            let active = undefined;
+            let deposit = undefined;
+            let withdraw = undefined;
             for (let j = 0; j < chains.length; j++) {
                 const chain = chains[j];
                 const networkId = this.safeString (chain, 'chain');
@@ -995,11 +998,15 @@ module.exports = class bybit extends Exchange {
                 minPrecision = (minPrecision === undefined) ? precision : Math.min (minPrecision, precision);
                 const depositAllowed = this.safeInteger (chain, 'chainDeposit') === 1;
                 const withdrawAllowed = this.safeInteger (chain, 'chainWithdraw') === 1;
+                const isActive = (depositAllowed && withdrawAllowed);
+                deposit = deposit === undefined || depositAllowed ? depositAllowed : deposit;
+                withdraw = withdraw === undefined || withdrawAllowed ? withdrawAllowed : withdraw;
+                active = active === undefined || isActive ? isActive : active;
                 networks[networkCode] = {
                     'info': chain,
                     'id': networkId,
                     'network': networkCode,
-                    'active': undefined,
+                    'active': isActive,
                     'deposit': depositAllowed,
                     'withdraw': withdrawAllowed,
                     'fee': this.safeNumber (chain, 'withdrawFee'),
@@ -1021,9 +1028,9 @@ module.exports = class bybit extends Exchange {
                 'code': code,
                 'id': currencyId,
                 'name': name,
-                'active': undefined,
-                'deposit': undefined,
-                'withdraw': undefined,
+                'active': active,
+                'deposit': deposit,
+                'withdraw': withdraw,
                 'fee': undefined,
                 'precision': minPrecision,
                 'limits': {

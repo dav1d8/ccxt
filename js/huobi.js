@@ -2862,16 +2862,8 @@ module.exports = class huobi extends Exchange {
                 if (precision !== undefined) {
                     minPrecision = (minPrecision === undefined) ? precision : Precise.stringMin (precision, minPrecision);
                 }
-                if (withdrawEnabled && !withdraw) {
-                    withdraw = true;
-                } else if (!withdrawEnabled) {
-                    withdraw = false;
-                }
-                if (depositEnabled && !deposit) {
-                    deposit = true;
-                } else if (!depositEnabled) {
-                    deposit = false;
-                }
+                withdraw = withdraw === undefined || withdrawEnabled ? withdrawEnabled : withdraw;
+                deposit = deposit === undefined || depositEnabled ? depositEnabled : deposit;
                 const fee = this.safeNumber (chainEntry, 'transactFeeWithdraw');
                 networks[networkCode] = {
                     'info': chainEntry,

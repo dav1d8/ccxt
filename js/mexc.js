@@ -438,15 +438,15 @@ module.exports = class mexc extends Exchange {
             const id = this.safeString (currency, 'currency');
             const code = this.safeCurrencyCode (id);
             const name = this.safeString (currency, 'full_name');
-            let currencyActive = false;
+            let currencyActive = undefined;
             let minPrecision = undefined;
             let currencyFee = undefined;
             let currencyWithdrawMin = undefined;
             let currencyWithdrawMax = undefined;
             const networks = {};
             const chains = this.safeValue (currency, 'coins', []);
-            let depositEnabled = false;
-            let withdrawEnabled = false;
+            let depositEnabled = undefined;
+            let withdrawEnabled = undefined;
             for (let j = 0; j < chains.length; j++) {
                 const chain = chains[j];
                 const networkId = this.safeString (chain, 'chain');
@@ -454,7 +454,7 @@ module.exports = class mexc extends Exchange {
                 const isDepositEnabled = this.safeValue (chain, 'is_deposit_enabled', false);
                 const isWithdrawEnabled = this.safeValue (chain, 'is_withdraw_enabled', false);
                 const active = (isDepositEnabled && isWithdrawEnabled);
-                currencyActive = active || currencyActive;
+                currencyActive = currencyActive === undefined || active ? active : currencyActive;
                 const withdrawMin = this.safeString (chain, 'withdraw_limit_min');
                 const withdrawMax = this.safeString (chain, 'withdraw_limit_max');
                 currencyWithdrawMin = (currencyWithdrawMin === undefined) ? withdrawMin : currencyWithdrawMin;
@@ -465,12 +465,8 @@ module.exports = class mexc extends Exchange {
                 if (Precise.stringLt (currencyWithdrawMax, withdrawMax)) {
                     currencyWithdrawMax = withdrawMax;
                 }
-                if (isDepositEnabled) {
-                    depositEnabled = true;
-                }
-                if (isWithdrawEnabled) {
-                    withdrawEnabled = true;
-                }
+                depositEnabled = depositEnabled === undefined || isDepositEnabled ? isDepositEnabled : depositEnabled;
+                withdrawEnabled = withdrawEnabled === undefined || isWithdrawEnabled ? isWithdrawEnabled : withdrawEnabled;
                 const precision = this.parsePrecision (this.safeString (chain, 'precision'));
                 if (precision !== undefined) {
                     minPrecision = (minPrecision === undefined) ? precision : Precise.stringMin (precision, minPrecision);
