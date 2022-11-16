@@ -197,6 +197,7 @@ const pro = {
     'kucoin':                  require ('./js/pro/kucoin.js'),
     // 'luno':                    require ('./js/pro/luno.js'),
     'mexc':                    require ('./js/pro/mexc.js'),
+    'mexc3':                   require ('./js/pro/mexc3.js'),
     // 'ndax':                    require ('./js/pro/ndax.js'),
     // 'okcoin':                  require ('./js/pro/okcoin.js'),
     // 'okex':                    require ('./js/pro/okex.js'),
