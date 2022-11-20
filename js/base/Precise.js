@@ -279,6 +279,22 @@ class Precise {
         }
         return (new Precise (string1)).le (new Precise (string2))
     }
+
+    static sub(num1, num2) {
+        return parseFloat(Precise.stringSub(num1.toString(), num2.toString()));
+    }
+
+    static add(num1, num2) {
+        return parseFloat(Precise.stringAdd(num1.toString(), num2.toString()));
+    }
+
+    static mul(num1, num2) {
+        return parseFloat(Precise.stringMul(num1.toString(), num2.toString()));
+    }
+
+    static div(num1, num2) {
+        return parseFloat(Precise.stringDiv(num1.toString(), num2.toString()));
+    }
 }
 
 module.exports = Precise;
