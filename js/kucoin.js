@@ -183,6 +183,7 @@ module.exports = class kucoin extends Exchange {
                         'margin/lend/trade/settled': 1,
                         'margin/lend/assets': 1,
                         'margin/market': 1,
+                        'risk/limit/strategy': 1,
                         'stop-order/{orderId}': 1,
                         'stop-order': 1,
                         'stop-order/queryOrderByClientOid': 1,
@@ -720,8 +721,8 @@ module.exports = class kucoin extends Exchange {
             const id = this.safeString (entry, 'currency');
             const name = this.safeString (entry, 'fullName');
             const code = this.safeCurrencyCode (id);
-            const isWithdrawEnabled = this.safeValue (entry, 'isWithdrawEnabled', false);
-            const isDepositEnabled = this.safeValue (entry, 'isDepositEnabled', false);
+            const isWithdrawEnabled = this.safeValue (entry, 'isWithdrawEnabled');
+            const isDepositEnabled = this.safeValue (entry, 'isDepositEnabled');
             const fee = this.safeNumber (entry, 'withdrawalMinFee');
             const active = (isWithdrawEnabled && isDepositEnabled);
             result[code] = {
@@ -2533,6 +2534,8 @@ module.exports = class kucoin extends Exchange {
         account['used'] = this.safeString (entry, 'holdBalance');
         account['free'] = this.safeString (entry, 'availableBalance');
         account['total'] = this.safeString (entry, 'totalBalance');
+        account['borrowed'] = this.safeString (entry, 'liability');
+        account['interest'] = this.safeString (entry, 'interest');
         const debt = this.safeString (entry, 'liability');
         const interest = this.safeString (entry, 'interest');
         account['debt'] = Precise.stringAdd (debt, interest);
@@ -2582,7 +2585,7 @@ module.exports = class kucoin extends Exchange {
         }
         const response = await this[method] (this.extend (request, query));
         //
-        // Spot and Cross
+        // Spot
         //
         //    {
         //        "code": "200000",
@@ -2595,6 +2598,33 @@ module.exports = class kucoin extends Exchange {
         //                "id": "5c6a4fd399a1d81c4f9cc4d0",
         //                "type": "trade",
         //            },
+        //        ]
+        //    }
+        //
+        // Cross
+        //
+        //    {
+        //        "code": "200000",
+        //        "data": [
+        //            "debtRatio": "0",
+        //            "accounts": [
+        //                {
+        //                    "currency": "KCS",
+        //                    "totalBalance": "0.01",
+        //                    "availableBalance": "0.01",
+        //                    "holdBalance": "0",
+        //                    "liability": "0",
+        //                    "maxBorrowSize": "0"
+        //                },
+        //                {
+        //                    "currency": "USDT",
+        //                    "totalBalance": "0",
+        //                    "availableBalance": "0",
+        //                    "holdBalance": "0",
+        //                    "liability": "0",
+        //                    "maxBorrowSize": "0"
+        //                },
+        //            ]
         //        ]
         //    }
         //
@@ -2698,12 +2728,14 @@ module.exports = class kucoin extends Exchange {
         await this.loadMarkets ();
         const currency = this.currency (code);
         const requestedAmount = this.currencyToPrecision (code, amount);
-        let fromId = this.convertTypeToAccount (fromAccount);
-        let toId = this.convertTypeToAccount (toAccount);
-        const fromIsolated = this.inArray (fromId, this.ids);
-        const toIsolated = this.inArray (toId, this.ids);
-        if (fromId === 'contract') {
-            if (toId !== 'main') {
+        fromAccount = this.convertTypeToAccount (fromAccount);
+        toAccount = this.convertTypeToAccount (toAccount);
+        const fromTag = this.safeString (params, 'fromTag');
+        const toTag = this.safeString (params, 'toTag');
+        const fromIsolated = fromAccount === 'isolated';
+        const toIsolated = toAccount === 'isolated';
+        if (fromAccount === 'contract') {
+            if (toAccount !== 'main') {
                 throw new ExchangeError (this.id + ' transfer() only supports transferring from futures account to main account');
             }
             const request = {
@@ -2747,17 +2779,15 @@ module.exports = class kucoin extends Exchange {
                 'amount': requestedAmount,
             };
             if (fromIsolated || toIsolated) {
-                if (this.inArray (fromId, this.ids)) {
-                    request['fromTag'] = fromId;
-                    fromId = 'isolated';
+                if (this.inArray (fromTag, this.ids)) {
+                    request['fromTag'] = fromTag;
                 }
-                if (this.inArray (toId, this.ids)) {
-                    request['toTag'] = toId;
-                    toId = 'isolated';
+                if (this.inArray (toTag, this.ids)) {
+                    request['toTag'] = toTag;
                 }
             }
-            request['from'] = fromId;
-            request['to'] = toId;
+            request['from'] = fromAccount;
+            request['to'] = toAccount;
             if (!('clientOid' in params)) {
                 request['clientOid'] = this.uuid ();
             }
@@ -2774,8 +2804,8 @@ module.exports = class kucoin extends Exchange {
             const transfer = this.parseTransfer (data, currency);
             return this.extend (transfer, {
                 'amount': requestedAmount,
-                'fromAccount': fromId,
-                'toAccount': toId,
+                'fromAccount': fromAccount,
+                'toAccount': toAccount,
             });
         }
     }
