@@ -92,6 +92,7 @@ module.exports = class phemex extends Exchange {
                     'v2': 'https://{hostname}',
                     'public': 'https://{hostname}/exchange/public',
                     'private': 'https://{hostname}',
+                    'web': 'https://phemex.com/api',
                 },
                 'www': 'https://phemex.com',
                 'doc': 'https://github.com/phemex/phemex-api-docs',
@@ -118,6 +119,11 @@ module.exports = class phemex extends Exchange {
                 '1M': '2592000',
             },
             'api': {
+                'web': {
+                    'get': [
+                        'phemex-common-service/public/data/coin/basic/list',
+                    ],
+                },
                 'public': {
                     'get': [
                         'cfg/v2/products', // spot + contracts
@@ -127,6 +133,8 @@ module.exports = class phemex extends Exchange {
                         'md/kline', // ?from=1589811875&resolution=1800&symbol=sBTCUSDT&to=1592457935
                         'md/v2/kline/list', // perpetual api ?symbol=<symbol>&to=<to>&from=<from>&resolution=<resolution>
                         'md/v2/kline/last', // perpetual ?symbol=<symbol>&resolution=<resolution>&limit=<limit>
+                        'fees-conditions',
+                        'cfg/chain-settings',
                     ],
                 },
                 'v1': {
@@ -3455,6 +3463,12 @@ module.exports = class phemex extends Exchange {
             }
             const auth = requestPath + queryString + expiryString + payload;
             headers['x-phemex-request-signature'] = this.hmac (this.encode (auth), this.encode (this.secret));
+        }
+        if (api === 'web') {
+            const a = () => Math.floor(65536 * (1 + Math.random())).toString(16).substring(1);
+            headers = {
+                'bid': `${a()}${a()}-${a()}-${a()}-${a()}-${a()}${a()}${a()}`
+            };
         }
         url = this.implodeHostname (this.urls['api'][api]) + url;
         return { 'url': url, 'method': method, 'body': body, 'headers': headers };
