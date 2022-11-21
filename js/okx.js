@@ -1255,28 +1255,19 @@ module.exports = class okx extends Exchange {
             const code = currency['code'];
             const chains = dataByCurrencyId[currencyId];
             const networks = {};
-            let currencyActive = false;
-            let depositEnabled = undefined;
-            let withdrawEnabled = undefined;
+            let active = undefined;
+            let deposit = undefined;
+            let withdraw = undefined;
             let maxPrecision = undefined;
             for (let j = 0; j < chains.length; j++) {
                 const chain = chains[j];
                 const canDeposit = this.safeValue (chain, 'canDep');
                 const canWithdraw = this.safeValue (chain, 'canWd');
-                const canInternal = this.safeValue (chain, 'canInternal');
-                const active = (canDeposit && canWithdraw && canInternal) ? true : false;
-                currencyActive = (currencyActive === undefined) ? active : currencyActive;
+                const isActive = !!(canDeposit && canWithdraw);
+                active = (active === undefined || isActive) ? isActive : active;
+                deposit = (deposit === undefined || canDeposit) ? canDeposit : deposit;
+                withdraw = (withdraw === undefined || canWithdraw) ? canWithdraw : withdraw;
                 const networkId = this.safeString (chain, 'chain');
-                if (canDeposit && !depositEnabled) {
-                    depositEnabled = true;
-                } else if (!canDeposit) {
-                    depositEnabled = false;
-                }
-                if (canWithdraw && !withdrawEnabled) {
-                    withdrawEnabled = true;
-                } else if (!canWithdraw) {
-                    withdrawEnabled = false;
-                }
                 const posHyphen  = networkId.indexOf ('-');
                 if ((networkId !== undefined) && (posHyphen >= 0)) {
                     const chainPart = networkId.substring(posHyphen + 1);
@@ -1290,7 +1281,7 @@ module.exports = class okx extends Exchange {
                     networks[networkCode] = {
                         'id': networkId,
                         'network': networkCode,
-                        'active': active,
+                        'active': isActive,
                         'deposit': canDeposit,
                         'withdraw': canWithdraw,
                         'fee': this.safeNumber (chain, 'minFee'),
@@ -1311,9 +1302,9 @@ module.exports = class okx extends Exchange {
                 'code': code,
                 'id': currencyId,
                 'name': this.safeString (firstChain, 'name'),
-                'active': currencyActive,
-                'deposit': depositEnabled,
-                'withdraw': withdrawEnabled,
+                'active': active,
+                'deposit': deposit,
+                'withdraw': withdraw,
                 'fee': undefined,
                 'precision': this.parseNumber (maxPrecision),
                 'limits': {
