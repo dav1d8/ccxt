@@ -637,12 +637,12 @@ module.exports = class mexc3 extends Exchange {
                     'active': active,
                     'deposit': isDepositEnabled,
                     'withdraw': isWithdrawEnabled,
-                    'fee': this.safeNumber (chain, 'fee'),
+                    'fee': fee,
                     'precision': undefined,
                     'limits': {
                         'withdraw': {
-                            'min': withdrawMin,
-                            'max': withdrawMax,
+                            'min': this.parseNumber(withdrawMin),
+                            'max': this.parseNumber(withdrawMax),
                         },
                     },
                 };
@@ -671,8 +671,8 @@ module.exports = class mexc3 extends Exchange {
                         'max': undefined,
                     },
                     'withdraw': {
-                        'min': currencyWithdrawMin,
-                        'max': currencyWithdrawMax,
+                        'min': this.parseNumber(currencyWithdrawMin),
+                        'max': this.parseNumber(currencyWithdrawMax),
                     },
                 },
                 'networks': networks,
