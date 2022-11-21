@@ -721,20 +721,20 @@ module.exports = class kucoin extends Exchange {
             const id = this.safeString (entry, 'currency');
             const name = this.safeString (entry, 'fullName');
             const code = this.safeCurrencyCode (id);
-            const isWithdrawEnabled = this.safeValue (entry, 'isWithdrawEnabled');
-            const isDepositEnabled = this.safeValue (entry, 'isDepositEnabled');
-            const fee = this.safeNumber (entry, 'withdrawalMinFee');
-            const active = (isWithdrawEnabled && isDepositEnabled);
+            //const isWithdrawEnabled = this.safeValue (entry, 'isWithdrawEnabled');
+            //const isDepositEnabled = this.safeValue (entry, 'isDepositEnabled');
+            //const active = (isWithdrawEnabled && isDepositEnabled);
+            //const fee = this.safeNumber (entry, 'withdrawalMinFee');
             result[code] = {
                 'id': id,
                 'name': name,
                 'code': code,
                 'precision': this.parseNumber (this.parsePrecision (this.safeString (entry, 'precision'))),
                 'info': entry,
-                'active': active,
-                'deposit': isDepositEnabled,
-                'withdraw': isWithdrawEnabled,
-                'fee': fee,
+                'active': undefined,
+                'deposit': undefined,
+                'withdraw': undefined,
+                'fee': undefined,
                 'limits': this.limits,
             };
         }
