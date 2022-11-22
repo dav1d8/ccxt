@@ -93,6 +93,7 @@ module.exports = class phemex extends Exchange {
                     'public': 'https://{hostname}/exchange/public',
                     'private': 'https://{hostname}',
                     'web': 'https://phemex.com/api',
+                    'webPrivate': 'https://phemex.com/api',
                 },
                 'www': 'https://phemex.com',
                 'doc': 'https://github.com/phemex/phemex-api-docs',
@@ -122,6 +123,11 @@ module.exports = class phemex extends Exchange {
                 'web': {
                     'get': [
                         'phemex-common-service/public/data/coin/basic/list',
+                    ],
+                },
+                'webPrivate': {
+                    'get': [
+                        'phemex-withdraw/withdraw/asset/info/public/balance/fee/query',
                     ],
                 },
                 'public': {
@@ -3466,8 +3472,13 @@ module.exports = class phemex extends Exchange {
         }
         if (api === 'web') {
             const a = () => Math.floor(65536 * (1 + Math.random())).toString(16).substring(1);
+            headers = {'bid': `${a()}${a()}-${a()}-${a()}-${a()}-${a()}${a()}${a()}`};
+        }
+        if (api === "webPrivate") {
             headers = {
-                'bid': `${a()}${a()}-${a()}-${a()}-${a()}-${a()}${a()}${a()}`
+                //Not used, this needs to be refreshed to an actual one from the web
+                'bid': '7532b67b-9b3d-8c04-2a3c-745e56a5f4bc',
+                'phemex-auth-token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHRyYSI6ImE5ZDUxYTE3LTgyOWQtNDNiMC04YTFjLTBmNmEwMWVkN2YyMC0xNjY4MDA3NzQ5MjU1IiwiaXNzIjoiUEhFTUVYIiwiZXhwIjoxNjcwMzMwOTY0LCJzdWJqIjo0NDY2NTEzLCJib2R5Ijoi8KOvjfCon4PwqpOC64iE5o-08J2Vv-OtmeWpqvCqqrrklbEiLCJpYXQiOjE2NjkxMjEzNjR9.neGYuX5umnH4jNEYWYXk0GAtfs5Azb6WH-tVUX6LHJc',
             };
         }
         url = this.implodeHostname (this.urls['api'][api]) + url;
