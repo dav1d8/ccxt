@@ -1261,9 +1261,9 @@ module.exports = class okx extends Exchange {
             let maxPrecision = undefined;
             for (let j = 0; j < chains.length; j++) {
                 const chain = chains[j];
-                const canDeposit = this.safeValue (chain, 'canDep');
-                const canWithdraw = this.safeValue (chain, 'canWd');
-                const isActive = !!(canDeposit && canWithdraw);
+                const canDeposit = this.safeValue (chain, 'canDep') === true;
+                const canWithdraw = this.safeValue (chain, 'canWd') === true;
+                const isActive = canDeposit && canWithdraw;
                 active = (active === undefined || isActive) ? isActive : active;
                 deposit = (deposit === undefined || canDeposit) ? canDeposit : deposit;
                 withdraw = (withdraw === undefined || canWithdraw) ? canWithdraw : withdraw;

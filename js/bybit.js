@@ -1002,19 +1002,19 @@ module.exports = class bybit extends Exchange {
                 const networkCode = this.networkIdToCode (networkId);
                 const precision = this.parseNumber (this.parsePrecision (this.safeString (chain, 'minAccuracy')));
                 minPrecision = (minPrecision === undefined) ? precision : Math.min (minPrecision, precision);
-                const depositAllowed = this.safeInteger (chain, 'chainDeposit') === 1;
-                const withdrawAllowed = this.safeInteger (chain, 'chainWithdraw') === 1;
-                const isActive = (depositAllowed && withdrawAllowed);
-                deposit = deposit === undefined || depositAllowed ? depositAllowed : deposit;
-                withdraw = withdraw === undefined || withdrawAllowed ? withdrawAllowed : withdraw;
+                const canDeposit = this.safeNumber (chain, 'chainDeposit') === 1;
+                const canWithdraw = this.safeNumber (chain, 'chainWithdraw') === 1;
+                const isActive = canDeposit && canWithdraw;
                 active = active === undefined || isActive ? isActive : active;
+                deposit = deposit === undefined || canDeposit ? canDeposit : deposit;
+                withdraw = withdraw === undefined || canWithdraw ? canWithdraw : withdraw;
                 networks[networkCode] = {
                     'info': chain,
                     'id': networkId,
                     'network': networkCode,
                     'active': isActive,
-                    'deposit': depositAllowed,
-                    'withdraw': withdrawAllowed,
+                    'deposit': canDeposit,
+                    'withdraw': canWithdraw,
                     'fee': this.safeNumber (chain, 'withdrawFee'),
                     'precision': precision,
                     'limits': {

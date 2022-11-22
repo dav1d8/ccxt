@@ -600,22 +600,24 @@ module.exports = class mexc3 extends Exchange {
             const id = this.safeString (currency, 'coin');
             const code = this.safeCurrencyCode (id);
             const name = this.safeString (currency, 'name');
-            let currencyActive = undefined;
             let currencyFee = undefined;
             let currencyWithdrawMin = undefined;
             let currencyWithdrawMax = undefined;
-            let depositEnabled = undefined;
-            let withdrawEnabled = undefined;
+            let active = undefined;
+            let deposit = undefined;
+            let withdraw = undefined;
             const networks = {};
             const chains = this.safeValue (currency, 'networkList', []);
             for (let j = 0; j < chains.length; j++) {
                 const chain = chains[j];
                 const networkId = this.safeString (chain, 'network');
                 const network = this.safeNetwork (networkId);
-                const isDepositEnabled = this.safeValue (chain, 'depositEnable', false);
-                const isWithdrawEnabled = this.safeValue (chain, 'withdrawEnable', false);
-                const active = (isDepositEnabled && isWithdrawEnabled);
-                currencyActive = currencyActive === undefined || active ? active : currencyActive;
+                const canDeposit = this.safeValue (chain, 'depositEnable') === true;
+                const canWithdraw = this.safeValue (chain, 'withdrawEnable') === true;
+                const isActive = (canDeposit && canWithdraw);
+                active = active === undefined || isActive ? isActive : active;
+                deposit = deposit === undefined || canDeposit ? canDeposit : deposit;
+                withdraw = withdraw === undefined || canWithdraw ? canWithdraw : withdraw;
                 const withdrawMin = this.safeString (chain, 'withdrawMin');
                 const withdrawMax = this.safeString (chain, 'withdrawMax');
                 currencyWithdrawMin = (currencyWithdrawMin === undefined) ? withdrawMin : currencyWithdrawMin;
@@ -628,15 +630,13 @@ module.exports = class mexc3 extends Exchange {
                 if (Precise.stringLt (currencyWithdrawMax, withdrawMax)) {
                     currencyWithdrawMax = withdrawMax;
                 }
-                depositEnabled = depositEnabled === undefined || isDepositEnabled ? isDepositEnabled : depositEnabled;
-                withdrawEnabled = withdrawEnabled === undefined || isWithdrawEnabled ? isWithdrawEnabled : withdrawEnabled;
                 networks[network] = {
                     'info': chain,
                     'id': networkId,
                     'network': network,
-                    'active': active,
-                    'deposit': isDepositEnabled,
-                    'withdraw': isWithdrawEnabled,
+                    'active': isActive,
+                    'deposit': canDeposit,
+                    'withdraw': canWithdraw,
                     'fee': fee,
                     'precision': undefined,
                     'limits': {
@@ -660,9 +660,9 @@ module.exports = class mexc3 extends Exchange {
                 'id': id,
                 'code': code,
                 'name': name,
-                'active': currencyActive,
-                'deposit': depositEnabled,
-                'withdraw': withdrawEnabled,
+                'active': active,
+                'deposit': deposit,
+                'withdraw': withdraw,
                 'fee': currencyFee,
                 'precision': undefined,
                 'limits': {

@@ -742,7 +742,7 @@ module.exports = class bitfinex2 extends Exchange {
                 const status = this.safeValue(indexed['status'], txMethod, []);
                 const canDeposit = this.safeNumber(status, 1) === 1;
                 const canWithdraw = this.safeNumber(status, 2) === 1;
-                const isActive = canDeposit === true && canWithdraw === true;
+                const isActive = canDeposit && canWithdraw;
                 active = active === undefined || isActive ? isActive : active;
                 deposit = deposit === undefined || canDeposit ? canDeposit : deposit;
                 withdraw = withdraw === undefined || canWithdraw ? canWithdraw : withdraw;
@@ -784,7 +784,7 @@ module.exports = class bitfinex2 extends Exchange {
                 'code': code,
                 'info': [ id, label, pool, feeValues, undl ],
                 'name': name,
-                'active': active !== undefined ? active : true,
+                'active': active,
                 'deposit': deposit,
                 'withdraw': withdraw,
                 'fee': fee,

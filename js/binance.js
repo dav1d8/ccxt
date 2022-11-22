@@ -1550,8 +1550,9 @@ module.exports = class binance extends Exchange {
             const name = this.safeString (entry, 'name');
             const code = this.safeCurrencyCode (id);
             const networks = {};
-            let isWithdrawEnabled = undefined;
-            let isDepositEnabled = undefined;
+            let active = undefined;
+            let deposit = undefined;
+            let withdraw = undefined;
             const networkList = this.safeValue (entry, 'networkList', []);
             const fees = {};
             let fee = undefined;
@@ -1562,11 +1563,12 @@ module.exports = class binance extends Exchange {
                 const network = this.safeNetwork(networkId);
                 // const name = this.safeString (networkItem, 'name');
                 const withdrawFee = this.safeNumber (networkItem, 'withdrawFee');
-                const depositEnable = this.safeValue (networkItem, 'depositEnable');
-                const withdrawEnable = this.safeValue (networkItem, 'withdrawEnable');
-                const active = !!(depositEnable && withdrawEnable);
-                isDepositEnabled = isDepositEnabled === undefined || depositEnable ? depositEnable : isDepositEnabled;
-                isWithdrawEnabled = isWithdrawEnabled === undefined || withdrawEnable ? withdrawEnable : isWithdrawEnabled;
+                const canDeposit = this.safeValue (networkItem, 'depositEnable') === true;
+                const canWithdraw = this.safeValue (networkItem, 'withdrawEnable') === true;
+                const isActive = canDeposit && canWithdraw;
+                active = active === undefined || isActive ? isActive : active;
+                deposit = deposit === undefined || canDeposit ? canDeposit : deposit;
+                withdraw = withdraw === undefined || canWithdraw ? canWithdraw : withdraw;
                 fees[network] = withdrawFee;
                 const isDefault = this.safeValue (networkItem, 'isDefault');
                 if (isDefault || (fee === undefined)) {
@@ -1584,9 +1586,9 @@ module.exports = class binance extends Exchange {
                 networks[network] = {
                     id: networkId,
                     network: network,
-                    active: active,
-                    deposit: depositEnable,
-                    withdraw: withdrawEnable,
+                    active: isActive,
+                    deposit: canDeposit,
+                    withdraw: canWithdraw,
                     fee: withdrawFee,
                     precision: this.precisionFromString (precisionValue),
                     limits: {
@@ -1598,8 +1600,7 @@ module.exports = class binance extends Exchange {
                     info: networkItem,
                 };
             }
-            const trading = this.safeValue (entry, 'trading');
-            const active = (isWithdrawEnabled && isDepositEnabled && trading);
+            //const trading = this.safeValue (entry, 'trading'); //NOT used for active field
             result[code] = {
                 'id': id,
                 'name': name,
@@ -1607,8 +1608,8 @@ module.exports = class binance extends Exchange {
                 'precision': this.parseNumber (this.numberToString (this.precisionFromString (maxPrecision))),
                 'info': entry,
                 'active': active,
-                'deposit': isDepositEnabled,
-                'withdraw': isWithdrawEnabled,
+                'deposit': deposit,
+                'withdraw': withdraw,
                 'networks': networks,
                 'fee': fee,
                 'fees': fees,

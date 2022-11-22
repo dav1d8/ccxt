@@ -2837,10 +2837,10 @@ module.exports = class huobi extends Exchange {
             const chains = this.safeValue (entry, 'chains', []);
             const networks = {};
             const instStatus = this.safeString (entry, 'instStatus');
-            const currencyActive = instStatus === 'normal';
             let minPrecision = undefined;
             let minWithdraw = undefined;
             let maxWithdraw = undefined;
+            let active = undefined;
             let deposit = undefined;
             let withdraw = undefined;
             for (let j = 0; j < chains.length; j++) {
@@ -2855,15 +2855,16 @@ module.exports = class huobi extends Exchange {
                 maxWithdraw = this.safeNumber (chainEntry, 'maxWithdrawAmt');
                 const withdrawStatus = this.safeString (chainEntry, 'withdrawStatus');
                 const depositStatus = this.safeString (chainEntry, 'depositStatus');
-                const withdrawEnabled = (withdrawStatus === 'allowed');
-                const depositEnabled = (depositStatus === 'allowed');
-                const active = withdrawEnabled && depositEnabled;
+                const canDeposit = (depositStatus === 'allowed') && instStatus === 'normal';
+                const canWithdraw = (withdrawStatus === 'allowed') && instStatus === 'normal';
+                const isActive = canDeposit && canWithdraw;
+                active = active === undefined || isActive ? isActive : active;
+                deposit = deposit === undefined || canDeposit ? canDeposit : deposit;
+                withdraw = withdraw === undefined || canWithdraw ? canWithdraw : withdraw;
                 const precision = this.parsePrecision (this.safeString (chainEntry, 'withdrawPrecision'));
                 if (precision !== undefined) {
                     minPrecision = (minPrecision === undefined) ? precision : Precise.stringMin (precision, minPrecision);
                 }
-                withdraw = withdraw === undefined || withdrawEnabled ? withdrawEnabled : withdraw;
-                deposit = deposit === undefined || depositEnabled ? depositEnabled : deposit;
                 const fee = this.safeNumber (chainEntry, 'transactFeeWithdraw');
                 networks[networkCode] = {
                     'info': chainEntry,
@@ -2876,9 +2877,9 @@ module.exports = class huobi extends Exchange {
                             'max': maxWithdraw,
                         },
                     },
-                    'active': active,
-                    'deposit': depositEnabled,
-                    'withdraw': withdrawEnabled,
+                    'active': isActive,
+                    'deposit': canDeposit,
+                    'withdraw': canWithdraw,
                     'fee': fee,
                     'precision': this.parseNumber (precision),
                 };
@@ -2887,7 +2888,7 @@ module.exports = class huobi extends Exchange {
                 'info': entry,
                 'code': code,
                 'id': currencyId,
-                'active': currencyActive,
+                'active': active,
                 'deposit': deposit,
                 'withdraw': withdraw,
                 'fee': undefined,
