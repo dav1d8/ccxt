@@ -2774,6 +2774,21 @@ module.exports = class huobi extends Exchange {
         return this.safeString (defaultAccount, 'id');
     }
 
+    parseFee (chain) {
+        const withdrawFeeType = this.safeString(chain, "withdrawFeeType");
+        if (withdrawFeeType === "fixed") {
+            const transactFeeWithdraw = this.safeNumber(chain, "transactFeeWithdraw");
+            return { fee: transactFeeWithdraw, feePercent: undefined };
+        } else if (withdrawFeeType === "ratio") {
+            const transactFeeRateWithdraw = this.safeNumber(chain, "transactFeeRateWithdraw");
+            //NOTE: Could not find a case where fix and percentage both applied, check it later
+            const transactFeeWithdraw = this.safeNumber(chain, "transactFeeWithdraw", 0);
+            return { fee: transactFeeWithdraw, feePercent: transactFeeRateWithdraw };
+        }
+
+        console.error(this.id, "Unable to parse withdraw fee: ", chain);
+    };
+
     async fetchCurrencies (params = {}) {
         /**
          * @method
@@ -2865,7 +2880,7 @@ module.exports = class huobi extends Exchange {
                 if (precision !== undefined) {
                     minPrecision = (minPrecision === undefined) ? precision : Precise.stringMin (precision, minPrecision);
                 }
-                const fee = this.safeNumber (chainEntry, 'transactFeeWithdraw');
+                const { fee, feePercent } = this.parseFee (chainEntry);
                 networks[networkCode] = {
                     'info': chainEntry,
                     'id': networkId,
@@ -2881,6 +2896,7 @@ module.exports = class huobi extends Exchange {
                     'deposit': canDeposit,
                     'withdraw': canWithdraw,
                     'fee': fee,
+                    'feePercent': feePercent,
                     'precision': this.parseNumber (precision),
                 };
             }
