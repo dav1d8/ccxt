@@ -731,6 +731,7 @@ module.exports = class kucoin extends Exchange {
                 'code': code,
                 'precision': this.parseNumber (this.parsePrecision (this.safeString (entry, 'precision'))),
                 'info': entry,
+                'networks': undefined,
                 'active': undefined,
                 'deposit': undefined,
                 'withdraw': undefined,
