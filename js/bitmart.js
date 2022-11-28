@@ -3059,6 +3059,13 @@ module.exports = class bitmart extends Exchange {
         //
         //     {"errno":"OK","message":"INVALID_PARAMETER","code":49998,"trace":"eb5ebb54-23cd-4de2-9064-e090b6c3b2e3","data":null}
         //
+        const msg = this.safeStringLower (response, 'msg');
+        const success = this.safeValue (response, 'success');
+        if (msg === 'success' && success === true) {
+            //Needed to fetchWebCurrencies
+            return;
+        }
+
         const message = this.safeStringLower (response, 'message');
         const errorCode = this.safeString (response, 'code');
         if (((errorCode !== undefined) && (errorCode !== '1000')) || ((message !== undefined) && (message !== 'ok'))) {
