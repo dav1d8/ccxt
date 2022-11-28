@@ -1449,6 +1449,7 @@ module.exports = class binance extends Exchange {
         }
         const response = await this.sapiGetCapitalConfigGetall (params);
         const result = {};
+        const specialWithdrawTipBsc = "The network you have selected is BSC. Please ensure that the withdrawal address supports the Binance Smart Chain network. You will lose your assets if the chosen platform does not support retrievals.";
         for (let i = 0; i < response.length; i++) {
             //
             //    {
@@ -1561,6 +1562,7 @@ module.exports = class binance extends Exchange {
                 const networkItem = networkList[j];
                 const networkId = this.safeString (networkItem, 'network');
                 const network = this.safeNetwork(networkId);
+                const networkName = this.safeString (networkItem, 'name');
                 // const name = this.safeString (networkItem, 'name');
                 const withdrawFee = this.safeNumber (networkItem, 'withdrawFee');
                 const canDeposit = this.safeValue (networkItem, 'depositEnable') === true;
@@ -1583,20 +1585,46 @@ module.exports = class binance extends Exchange {
                 } else {
                     maxPrecision = Precise.stringMin(maxPrecision, precisionValue);
                 }
+                const description = this.safeString (networkItem, 'specialTips', '');
+                const busy = this.safeValue (networkItem, 'busy');
+                const depositDescription = this.safeString (networkItem, 'depositDesc', '');
+                const minConfirm = this.safeNumber (networkItem, 'minConfirm');
+                const unLockConfirm = this.safeNumber (networkItem, 'unLockConfirm');
+                const depositMinimumConfirm = Math.max (minConfirm, unLockConfirm);
+                const withdrawDesc = this.safeString (networkItem, 'withdrawDesc', '');
+                let specialWithdrawTips = this.safeString (networkItem, 'specialWithdrawTips', '');
+                if (specialWithdrawTips === specialWithdrawTipBsc) {
+                    specialWithdrawTips = "";
+                }
+                const withdrawDescription = withdrawDesc + specialWithdrawTips;
+                const withdrawEstimatedArrivalMinutes = this.safeNumber (networkItem, 'estimatedArrivalTime');
                 networks[network] = {
                     id: networkId,
                     network: network,
+                    name: networkName,
                     active: isActive,
                     deposit: canDeposit,
                     withdraw: canWithdraw,
                     fee: withdrawFee,
+                    feePercent: undefined, //Maybe parse from one of the description fields
                     precision: this.precisionFromString (precisionValue),
                     limits: {
                         withdraw: {
                             min: this.safeNumber(networkItem, "withdrawMin"),
                             max: this.safeNumber(networkItem, "withdrawMax"),
+                            daily: undefined,
                         },
                     },
+                    busy: busy,
+                    description: description,
+                    depositDescription: depositDescription,
+                    depositAddress: undefined,
+                    depositMinimumConfirm: depositMinimumConfirm,
+                    withdrawDescription: withdrawDescription,
+                    withdrawEstimatedArrivalMinutes: withdrawEstimatedArrivalMinutes,
+                    contractAddress: undefined,
+                    contractExplorer: undefined,
+                    explorer: undefined,
                     info: networkItem,
                 };
             }
