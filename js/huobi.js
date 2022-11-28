@@ -899,12 +899,12 @@ module.exports = class huobi extends Exchange {
                     'types': {
                         'spot': true,
                         'future': {
-                            'linear': true,
-                            'inverse': true,
+                            'linear': false,
+                            'inverse': false,
                         },
                         'swap': {
-                            'linear': true,
-                            'inverse': true,
+                            'linear': false,
+                            'inverse': false,
                         },
                     },
                 },
@@ -3446,6 +3446,17 @@ module.exports = class huobi extends Exchange {
         return this.parseOrder (order);
     }
 
+    account () {
+        //In some cases we don't receive 0 amounts, so we start with 0
+        return {
+            'free': 0,
+            'used': 0,
+            'borrowed': 0,
+            'interest': 0,
+            'total': undefined, //Total needs to be undefined, so safeBalance can calculate it
+        };
+    }
+
     parseMarginBalanceHelper (balance, code, result) {
         let account = undefined;
         if (code in result) {
@@ -3458,6 +3469,12 @@ module.exports = class huobi extends Exchange {
         }
         if (balance['type'] === 'frozen') {
             account['used'] = this.safeString (balance, 'balance');
+        }
+        if (balance['type'] === 'loan') {
+            account['borrowed'] = this.safeString (balance, 'balance');
+        }
+        if (balance['type'] === 'interest') {
+            account['interest'] = this.safeString (balance, 'balance');
         }
         return account;
     }
