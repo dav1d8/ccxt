@@ -1598,6 +1598,7 @@ module.exports = class binance extends Exchange {
                 }
                 const withdrawDescription = withdrawDesc + specialWithdrawTips;
                 const withdrawEstimatedArrivalMinutes = this.safeNumber (networkItem, 'estimatedArrivalTime');
+                const feePercent = this.parseWithdrawFeePercentFromDescriptions(withdrawDescription, description);
                 networks[network] = {
                     id: networkId,
                     network: network,
@@ -1606,7 +1607,7 @@ module.exports = class binance extends Exchange {
                     deposit: canDeposit,
                     withdraw: canWithdraw,
                     fee: withdrawFee,
-                    feePercent: undefined, //Maybe parse from one of the description fields
+                    feePercent: feePercent,
                     precision: this.precisionFromString (precisionValue),
                     limits: {
                         withdraw: {
@@ -1645,6 +1646,27 @@ module.exports = class binance extends Exchange {
             };
         }
         return result;
+    }
+
+    parseWithdrawFeePercentFromDescriptions(withdrawDescription, description) {
+        const feePercents1 = this.parseWithdrawFeePercentFromDescription(withdrawDescription);
+        const feePercents2 = this.parseWithdrawFeePercentFromDescription(description);
+        const feePercents = [...new Set([...feePercents1, ...feePercents2])];
+        if (feePercents.length > 1) {
+            console.error(this.id, "Error while searching for feePercent in descriptions, found different percentages:", feePercents);
+            return;
+        }
+        if (feePercents.length === 0) {
+            return;
+        }
+        return feePercents[0];
+    }
+
+    parseWithdrawFeePercentFromDescription(description) {
+        if (description.indexOf("%") === -1) {
+            return [];
+        }
+        return [...description.matchAll(/([\d.]+)%/g)].map(item => Precise.div(item[1], 100));
     }
 
     async fetchMarkets (params = {}) {

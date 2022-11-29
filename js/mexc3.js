@@ -630,6 +630,8 @@ module.exports = class mexc3 extends Exchange {
                 if (Precise.stringLt (currencyWithdrawMax, withdrawMax)) {
                     currencyWithdrawMax = withdrawMax;
                 }
+                const withdrawTips = this.safeString (chain, 'withdrawTips', '');
+                const feePercent = this.parseWithdrawFeePercentFromDescriptions(withdrawTips);
                 networks[network] = {
                     'info': chain,
                     'id': networkId,
@@ -638,6 +640,7 @@ module.exports = class mexc3 extends Exchange {
                     'deposit': canDeposit,
                     'withdraw': canWithdraw,
                     'fee': fee,
+                    'feePercent': feePercent,
                     'precision': undefined,
                     'limits': {
                         'withdraw': {
@@ -679,6 +682,25 @@ module.exports = class mexc3 extends Exchange {
             };
         }
         return result;
+    }
+
+    parseWithdrawFeePercentFromDescriptions(withdrawTips) {
+        const feePercents = this.parseWithdrawFeePercentFromDescription(withdrawTips);
+        if (feePercents.length > 1) {
+            console.error(this.id, "Error while searching for feePercent in descriptions, found different percentages:", feePercents);
+            return;
+        }
+        if (feePercents.length === 0) {
+            return;
+        }
+        return feePercents[0];
+    }
+
+    parseWithdrawFeePercentFromDescription(description) {
+        if (description.indexOf("%") === -1) {
+            return [];
+        }
+        return [...description.matchAll(/([\d.]+)%/g)].map(item => Precise.div(item[1], 100));
     }
 
     safeNetwork (networkId) {
