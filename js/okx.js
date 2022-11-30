@@ -1278,20 +1278,37 @@ module.exports = class okx extends Exchange {
                     } else {
                         maxPrecision = Precise.stringMin (maxPrecision, precision);
                     }
+                    const fee = this.safeNumber (chain, 'minFee');
+                    // NOTE: minDepArrivalConfirm allows trading but not withdrawal
+                    //       minWdUnlockConfirm   allows trading and withdrawal
+                    const depositMinimumConfirm = this.safeNumber (chain, 'minDepArrivalConfirm'); //minWdUnlockConfirm
                     networks[networkCode] = {
                         'id': networkId,
                         'network': networkCode,
+                        'name': undefined,
                         'active': isActive,
                         'deposit': canDeposit,
                         'withdraw': canWithdraw,
-                        'fee': this.safeNumber (chain, 'minFee'),
+                        'fee': fee,
+                        'feePercent': undefined,
                         'precision': this.parseNumber (precision),
                         'limits': {
                             'withdraw': {
                                 'min': this.safeNumber (chain, 'minWd'),
                                 'max': this.safeNumber (chain, 'maxWd'),
+                                'daily': undefined,
                             },
                         },
+                        'busy': undefined,
+                        'description': undefined,
+                        'depositDescription': undefined,
+                        'depositAddress': undefined,
+                        'depositMinimumConfirm': depositMinimumConfirm,
+                        'withdrawDescription': undefined,
+                        'withdrawEstimatedArrivalMinutes': undefined,
+                        'contractAddress': undefined,
+                        'contractExplorer': undefined,
+                        'explorer': undefined,
                         'info': chain,
                     };
                 }
