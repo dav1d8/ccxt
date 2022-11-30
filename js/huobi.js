@@ -2881,23 +2881,40 @@ module.exports = class huobi extends Exchange {
                     minPrecision = (minPrecision === undefined) ? precision : Precise.stringMin (precision, minPrecision);
                 }
                 const { fee, feePercent } = this.parseFee (chainEntry);
+                // NOTE: numOfFastConfirmations allows trading but not withdrawal
+                //       numOfConfirmations     allows trading and withdrawal
+                const depositMinimumConfirm = this.safeNumber (chainEntry, 'numOfFastConfirmations'); //numOfConfirmations
+                const dailyMaxWithdraw = this.safeNumber (chainEntry, 'withdrawQuotaPerDay');
+
                 networks[networkCode] = {
-                    'info': chainEntry,
                     'id': networkId,
                     'idAlt': networkIdAlt,
                     'network': networkCode,
-                    'limits': {
-                        'withdraw': {
-                            'min': minWithdraw,
-                            'max': maxWithdraw,
-                        },
-                    },
+                    'name': undefined,
                     'active': isActive,
                     'deposit': canDeposit,
                     'withdraw': canWithdraw,
                     'fee': fee,
                     'feePercent': feePercent,
                     'precision': this.parseNumber (precision),
+                    'limits': {
+                        'withdraw': {
+                            'min': minWithdraw,
+                            'max': maxWithdraw,
+                            'daily': dailyMaxWithdraw,
+                        },
+                    },
+                    'busy': undefined,
+                    'description': undefined,
+                    'depositDescription': undefined,
+                    'depositAddress': undefined,
+                    'depositMinimumConfirm': depositMinimumConfirm,
+                    'withdrawDescription': undefined,
+                    'withdrawEstimatedArrivalMinutes': undefined,
+                    'contractAddress': undefined,
+                    'contractExplorer': undefined,
+                    'explorer': undefined,
+                    'info': chainEntry,
                 };
             }
             result[code] = {
