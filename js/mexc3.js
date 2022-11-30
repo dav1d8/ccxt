@@ -630,12 +630,18 @@ module.exports = class mexc3 extends Exchange {
                 if (Precise.stringLt (currencyWithdrawMax, withdrawMax)) {
                     currencyWithdrawMax = withdrawMax;
                 }
-                const withdrawTips = this.safeString (chain, 'withdrawTips', '');
-                const feePercent = this.parseWithdrawFeePercentFromDescriptions(withdrawTips);
+                const contractAddress = this.safeString (chain, 'contract');
+                const withdrawDescription = this.safeString (chain, 'withdrawTips', '');
+                const depositDescription = this.safeString (chain, 'depositTips', '');
+                const feePercent = this.parseWithdrawFeePercentFromDescriptions(withdrawDescription);
+                // NOTE:
+                // chain.withdrawIntegerMultiple is always null
+                // chain.minConfirm is always 0
+                // chain.depositDesc is not relevant, the website is not showing that and looks like it's wrong info
                 networks[network] = {
-                    'info': chain,
                     'id': networkId,
                     'network': network,
+                    'name': undefined,
                     'active': isActive,
                     'deposit': canDeposit,
                     'withdraw': canWithdraw,
@@ -646,8 +652,20 @@ module.exports = class mexc3 extends Exchange {
                         'withdraw': {
                             'min': this.parseNumber(withdrawMin),
                             'max': this.parseNumber(withdrawMax),
+                            'daily': undefined,
                         },
                     },
+                    'busy': undefined,
+                    'description': undefined,
+                    'depositDescription': depositDescription,
+                    'depositAddress': undefined,
+                    'depositMinimumConfirm': undefined,
+                    'withdrawDescription': withdrawDescription,
+                    'withdrawEstimatedArrivalMinutes': undefined,
+                    'contractAddress': contractAddress,
+                    'contractExplorer': undefined,
+                    'explorer': undefined,
+                    'info': chain,
                 };
             }
             const networkKeys = Object.keys (networks);
