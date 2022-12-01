@@ -2868,6 +2868,7 @@ module.exports = class huobi extends Exchange {
                 const networkCode = this.safeNetwork (displayName, currencyId, baseChainProtocol, baseChain);
                 minWithdraw = this.safeNumber (chainEntry, 'minWithdrawAmt');
                 maxWithdraw = this.safeNumber (chainEntry, 'maxWithdrawAmt');
+                const minDeposit = this.safeNumber (chainEntry, 'minDepositAmt');
                 const withdrawStatus = this.safeString (chainEntry, 'withdrawStatus');
                 const depositStatus = this.safeString (chainEntry, 'depositStatus');
                 const canDeposit = (depositStatus === 'allowed') && instStatus === 'normal';
@@ -2902,6 +2903,10 @@ module.exports = class huobi extends Exchange {
                             'min': minWithdraw,
                             'max': maxWithdraw,
                             'daily': dailyMaxWithdraw,
+                        },
+                        'deposit': {
+                            'min': minDeposit,
+                            'max': undefined,
                         },
                     },
                     'busy': undefined,

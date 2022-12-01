@@ -1298,6 +1298,10 @@ module.exports = class okx extends Exchange {
                                 'max': this.safeNumber (chain, 'maxWd'),
                                 'daily': undefined,
                             },
+                            'deposit': {
+                                'min': this.safeNumber (chain, 'minDep'),
+                                'max': undefined,
+                            },
                         },
                         'busy': undefined,
                         'description': undefined,
