@@ -709,7 +709,7 @@ module.exports = class mexc3 extends Exchange {
             return;
         }
         if (feePercents.length === 0) {
-            return;
+            return 0;
         }
         return feePercents[0];
     }

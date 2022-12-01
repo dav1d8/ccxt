@@ -2778,7 +2778,7 @@ module.exports = class huobi extends Exchange {
         const withdrawFeeType = this.safeString(chain, "withdrawFeeType");
         if (withdrawFeeType === "fixed") {
             const transactFeeWithdraw = this.safeNumber(chain, "transactFeeWithdraw");
-            return { fee: transactFeeWithdraw, feePercent: undefined };
+            return { fee: transactFeeWithdraw, feePercent: 0 };
         } else if (withdrawFeeType === "ratio") {
             const transactFeeRateWithdraw = this.safeNumber(chain, "transactFeeRateWithdraw");
             //NOTE: Could not find a case where fix and percentage both applied, check it later

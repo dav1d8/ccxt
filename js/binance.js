@@ -1657,7 +1657,7 @@ module.exports = class binance extends Exchange {
             return;
         }
         if (feePercents.length === 0) {
-            return;
+            return 0;
         }
         return feePercents[0];
     }
