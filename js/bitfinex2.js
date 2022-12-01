@@ -757,24 +757,40 @@ module.exports = class bitfinex2 extends Exchange {
                         //}
                     }
                 }
-                const minConfirm = this.safeNumber(status, 11);
+                const depositMinimumConfirm = this.safeNumber(status, 11);
                 const network = this.safeNetwork(networkId);
                 networks[network] = {
-                    id: networkId,
-                    network: network,
-                    active: isActive,
-                    deposit: canDeposit,
-                    withdraw: canWithdraw,
-                    fee: _fee,
-                    precision: precision,
-                    limits: {
-                        withdraw: {
-                            min: undefined,
-                            max: undefined,
+                    'id': networkId,
+                    'network': network,
+                    'name': undefined,
+                    'active': isActive,
+                    'deposit': canDeposit,
+                    'withdraw': canWithdraw,
+                    'fee': _fee,
+                    'feePercent': undefined,
+                    'precision': precision,
+                    'limits': {
+                        'withdraw': {
+                            'min': undefined,
+                            'max': undefined,
+                            'daily': undefined,
+                        },
+                        'deposit': {
+                            'min': undefined,
+                            'max': undefined,
                         },
                     },
-                    minConfirm: minConfirm,
-                    info: [pool, feeValues, txMethod, status],
+                    'busy': undefined,
+                    'description': undefined,
+                    'depositDescription': undefined,
+                    'depositAddress': undefined,
+                    'depositMinimumConfirm': depositMinimumConfirm,
+                    'withdrawDescription': undefined,
+                    'withdrawEstimatedArrivalMinutes': undefined,
+                    'contractAddress': undefined,
+                    'contractExplorer': undefined,
+                    'explorer': undefined,
+                    'info': [pool, feeValues, txMethod, status],
                 };
             }
             const fid = 'f' + id;
