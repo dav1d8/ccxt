@@ -1008,25 +1008,40 @@ module.exports = class bybit extends Exchange {
                 active = active === undefined || isActive ? isActive : active;
                 deposit = deposit === undefined || canDeposit ? canDeposit : deposit;
                 withdraw = withdraw === undefined || canWithdraw ? canWithdraw : withdraw;
+                const fee = this.safeNumber (chain, 'withdrawFee');
+                const depositMinimumConfirm = this.safeNumber (chain, 'confirmation');
                 networks[networkCode] = {
-                    'info': chain,
                     'id': networkId,
                     'network': networkCode,
+                    'name': undefined,
                     'active': isActive,
                     'deposit': canDeposit,
                     'withdraw': canWithdraw,
-                    'fee': this.safeNumber (chain, 'withdrawFee'),
+                    'fee': fee,
+                    'feePercent': undefined,
                     'precision': precision,
                     'limits': {
                         'withdraw': {
                             'min': this.safeNumber (chain, 'withdrawMin'),
                             'max': undefined,
+                            'daily': undefined,
                         },
                         'deposit': {
                             'min': this.safeNumber (chain, 'depositMin'),
                             'max': undefined,
                         },
                     },
+                    'busy': undefined,
+                    'description': undefined,
+                    'depositDescription': undefined,
+                    'depositAddress': undefined,
+                    'depositMinimumConfirm': depositMinimumConfirm,
+                    'withdrawDescription': undefined,
+                    'withdrawEstimatedArrivalMinutes': undefined,
+                    'contractAddress': undefined,
+                    'contractExplorer': undefined,
+                    'explorer': undefined,
+                    'info': chain,
                 };
             }
             result[code] = {
