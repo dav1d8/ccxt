@@ -303,6 +303,7 @@ module.exports = class Exchange {
         this.last_http_response    = undefined
         this.last_json_response    = undefined
         this.last_response_headers = undefined
+        this.cachedResponseHeader = undefined;
         // camelCase and snake_notation support
         const unCamelCaseProperties = (obj = this) => {
             if (obj !== null) {
@@ -2023,13 +2024,21 @@ module.exports = class Exchange {
     }
 
     async fetch2 (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined, config = {}, context = {}) {
+        let cost;
         if (this.enableRateLimit) {
-            const cost = this.calculateRateLimiterCost (api, method, path, params, config, context);
+            cost = this.calculateRateLimiterCost (api, method, path, params, config, context);
             await this.throttle (cost);
         }
         this.lastRestRequestTimestamp = this.milliseconds ();
         const request = this.sign (path, api, method, params, headers, body);
-        return await this.fetch (request['url'], request['method'], request['headers'], request['body']);
+        const result = await this.fetch (request['url'], request['method'], request['headers'], request['body']);
+        if (this.enableRateLimit) {
+            const cacheTtl = this.safeValue (this.last_response_headers, this.cachedResponseHeader);
+            if (cacheTtl !== undefined) {
+                this.throttle (-cost);
+            }
+        }
+        return result;
     }
 
     async request (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined, config = {}, context = {}) {

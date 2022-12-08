@@ -48,6 +48,12 @@ class Throttle {
 
 function throttle (config) {
     function inner (cost = undefined) {
+        if (cost < 0) {
+            //Negative cost can revert previously used cost
+            const tokens = this.config['tokens'] + Math.abs(cost);
+            this.config['tokens'] = Math.min (tokens, this.config['capacity']);
+            return;
+        }
         let resolver;
         const promise = new Promise ((resolve, reject) => {
             resolver = resolve;
