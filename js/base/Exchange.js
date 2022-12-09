@@ -303,7 +303,8 @@ module.exports = class Exchange {
         this.last_http_response    = undefined
         this.last_json_response    = undefined
         this.last_response_headers = undefined
-        this.cachedResponseHeader = undefined;
+        this.cacheTtlResponseHeader = undefined;
+        this.cacheConfigRequestHeader = undefined;
         // camelCase and snake_notation support
         const unCamelCaseProperties = (obj = this) => {
             if (obj !== null) {
@@ -478,7 +479,15 @@ module.exports = class Exchange {
         const underscore = underscorePrefix + '_' + lowercaseMethod + '_' + underscoreSuffix
         const typeArgument = (paths.length > 1) ? paths : paths[0]
         // handle call costs here
-        const partial = async (params = {}, context = {}) => this[methodName] (path, typeArgument, uppercaseMethod, params, undefined, undefined, config, context)
+        const partial = async (params = {}, context = {}) => {
+            let headers = undefined;
+            if (params[this.cacheConfigRequestHeader] !== undefined) {
+                headers = {};
+                headers[this.cacheConfigRequestHeader] = params[this.cacheConfigRequestHeader];
+                delete params[this.cacheConfigRequestHeader];
+            }
+            return this[methodName] (path, typeArgument, uppercaseMethod, params, headers, undefined, config, context)
+        }
         // const partial = async (params) => this[methodName] (path, typeArgument, uppercaseMethod, params || {})
         this[camelcase]  = partial
         this[underscore] = partial
@@ -2033,7 +2042,7 @@ module.exports = class Exchange {
         const request = this.sign (path, api, method, params, headers, body);
         const result = await this.fetch (request['url'], request['method'], request['headers'], request['body']);
         if (this.enableRateLimit) {
-            const cacheTtl = this.safeValue (this.last_response_headers, this.cachedResponseHeader);
+            const cacheTtl = this.safeValue (this.last_response_headers, this.cacheTtlResponseHeader);
             if (cacheTtl !== undefined) {
                 this.throttle (-cost);
             }
