@@ -1,5 +1,8 @@
 'use strict';
-
+let newrelic;
+try {
+    newrelic = require('newrelic')
+} catch(e) {}
 const errors = require ('../../base/errors')
     , functions = require ('../../base/functions')
     , {
@@ -21,8 +24,15 @@ const errors = require ('../../base/errors')
 module.exports = class Client {
 
     constructor (url, onMessageCallback, onErrorCallback, onCloseCallback, onConnectedCallback, config = {}) {
+        let newrelicKey;
+        try {
+            newrelicKey = new URL(url).hostname;
+        } catch (e) {
+            newrelicKey = url;
+        }
         const defaults = {
             url,
+            newrelicKey,
             onMessageCallback,
             onErrorCallback,
             onCloseCallback,
@@ -270,6 +280,16 @@ module.exports = class Client {
     }
 
     onMessage (message) {
+        if (newrelic) {
+            newrelic.startBackgroundTransaction(this.newrelicKey, "Websocket-Msg", () => {
+                this.onMessage2(message)
+            })
+        } else {
+            this.onMessage2(message)
+        }
+    }
+
+    onMessage2 (message) {
         // if we use onmessage we get MessageEvent objects
         // MessageEvent {isTrusted: true, data: "{"e":"depthUpdate","E":1581358737706,"s":"ETHBTC",…"0.06200000"]],"a":[["0.02261300","0.00000000"]]}", origin: "wss://stream.binance.com:9443", lastEventId: "", source: null, …}
         message = message.data
