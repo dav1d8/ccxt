@@ -280,12 +280,10 @@ module.exports = class Client {
     }
 
     onMessage (message) {
+        const start = Date.now();
+        this.onMessage2(message)
         if (newrelic) {
-            newrelic.startBackgroundTransaction(this.newrelicKey, "Websocket-Msg", () => {
-                this.onMessage2(message)
-            })
-        } else {
-            this.onMessage2(message)
+            newrelic.recordMetric("WebsocketMessage", Date.now() - start);
         }
     }
 
