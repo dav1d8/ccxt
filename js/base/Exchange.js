@@ -297,8 +297,8 @@ module.exports = class Exchange {
         this.precision = {}
         // response handling flags and properties
         this.lastRestRequestTimestamp = 0
-        this.enableLastJsonResponse = true
-        this.enableLastHttpResponse = true
+        this.enableLastJsonResponse = false
+        this.enableLastHttpResponse = false
         this.enableLastResponseHeaders = true
         this.last_http_response    = undefined
         this.last_json_response    = undefined
@@ -562,12 +562,18 @@ module.exports = class Exchange {
     parseJson (jsonString) {
         try {
             if (this.isJsonEncodedObject (jsonString)) {
-                return JSON.parse (this.onJsonResponse (jsonString))
+                jsonString = this.onJsonResponse (jsonString)
+                return this.parseJson2 (jsonString)
             }
         } catch (e) {
             // SyntaxError
             return undefined
         }
+    }
+
+    parseJson2 (jsonString) {
+        const result = JSON.parse (jsonString)
+        return result;
     }
 
     getResponseHeaders (response) {
@@ -595,7 +601,7 @@ module.exports = class Exchange {
             // no error handler needed, because it would not be a zip response in case of an error
             return responseBuffer;
         }
-        return response.text ().then ((responseBody) => {
+        return this.getResponseText(response, url).then ((responseBody) => {
             const bodyText = this.onRestResponse (response.status, response.statusText, url, method, responseHeaders, responseBody, requestHeaders, requestBody);
             const json = this.parseJson (bodyText)
             if (this.enableLastResponseHeaders) {
@@ -616,6 +622,10 @@ module.exports = class Exchange {
             }
             return json || responseBody
         })
+    }
+
+    async getResponseText(response, url) {
+        return await response.text();
     }
 
     onRestResponse (statusCode, statusText, url, method, responseHeaders, responseBody, requestHeaders, requestBody) {
