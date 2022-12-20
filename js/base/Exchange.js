@@ -542,13 +542,13 @@ module.exports = class Exchange {
         }
         if (typeof this.proxy === 'function') {
             url = this.proxy (url)
-            if (isNode) {
-                headers = this.extend ({ 'Origin': this.origin }, headers)
-            }
+            //if (isNode) {
+            //    headers = this.extend ({ 'Origin': this.origin }, headers)
+            //}
         } else if (typeof this.proxy === 'string') {
-            if (this.proxy.length && isNode) {
-                headers = this.extend ({ 'Origin': this.origin }, headers)
-            }
+            //if (this.proxy.length && isNode) {
+            //    headers = this.extend ({ 'Origin': this.origin }, headers)
+            //}
             url = this.proxy + url
         }
         headers = this.extend (this.headers, headers)
