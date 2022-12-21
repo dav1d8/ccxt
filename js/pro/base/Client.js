@@ -283,7 +283,7 @@ module.exports = class Client {
         const start = Date.now();
         this.onMessage2(message)
         if (newrelic) {
-            newrelic.recordMetric("WebsocketMessage", Date.now() - start);
+            newrelic.recordMetric("WebsocketMessage/" + this.newrelicKey, Date.now() - start);
         }
     }
 
