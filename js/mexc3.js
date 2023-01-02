@@ -750,8 +750,9 @@ module.exports = class mexc3 extends Exchange {
          * @returns {[object]} an array of objects representing market data
          */
         const spotMarket = await this.fetchSpotMarkets (params);
-        const swapMarket = await this.fetchSwapMarkets (params);
-        return this.arrayConcat (spotMarket, swapMarket);
+        //const swapMarket = await this.fetchSwapMarkets (params);
+        //return this.arrayConcat (spotMarket, swapMarket);
+        return spotMarket;
     }
 
     async fetchSpotMarkets (params = {}) {
@@ -3103,7 +3104,7 @@ module.exports = class mexc3 extends Exchange {
         });
         const marginMode = this.safeString (params, 'marginMode');
         const isMargin = this.safeValue (params, 'margin', false);
-        if ((marginMode !== undefined) || (isMargin) || (marketType === 'margin')) {
+        if ((marginMode === "isolated") || (isMargin) || (marketType === 'margin')) {
             let parsedSymbols = undefined;
             const symbol = this.safeString (params, 'symbol');
             if (symbol === undefined) {
