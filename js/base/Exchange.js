@@ -2913,7 +2913,8 @@ module.exports = class Exchange {
         if (!this.has['fetchTradingFees']) {
             throw new NotSupported (this.id + ' fetchTradingFee() is not supported yet');
         }
-        return await this.fetchTradingFees (params);
+        const result = await this.fetchTradingFees (params);
+        return result[symbol];
     }
 
     parseOpenInterest (interest, market = undefined) {
