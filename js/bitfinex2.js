@@ -451,10 +451,10 @@ module.exports = class bitfinex2 extends Exchange {
          * @returns {[object]} an array of objects representing market data
          */
         let spotMarketsInfo = await this.publicGetConfPubInfoPair (params);
-        let futuresMarketsInfo = await this.publicGetConfPubInfoPairFutures (params);
+        //let futuresMarketsInfo = await this.publicGetConfPubInfoPairFutures (params);
         spotMarketsInfo = this.safeValue (spotMarketsInfo, 0, []);
-        futuresMarketsInfo = this.safeValue (futuresMarketsInfo, 0, []);
-        const markets = this.arrayConcat (spotMarketsInfo, futuresMarketsInfo);
+        //futuresMarketsInfo = this.safeValue (futuresMarketsInfo, 0, []);
+        const markets = spotMarketsInfo;//this.arrayConcat (spotMarketsInfo, futuresMarketsInfo);
         let marginIds = await this.publicGetConfPubListPairMargin (params);
         marginIds = this.safeValue (marginIds, 0, []);
         //

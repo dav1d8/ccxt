@@ -756,7 +756,7 @@ module.exports = class phemex extends Exchange {
         //         }
         //     }
         //
-        const v1Products = await this.v1GetExchangePublicProducts (params);
+        const v1Products = undefined; //await this.v1GetExchangePublicProducts (params);
         const v1ProductsData = this.safeValue (v1Products, 'data', []);
         //
         //     {

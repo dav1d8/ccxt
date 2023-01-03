@@ -676,12 +676,13 @@ module.exports = class gate extends Exchange {
          */
         let promises = [
             this.fetchSpotMarkets (params),
-            this.fetchContractMarkets (params),
+            //this.fetchContractMarkets (params),
         ];
         promises = await Promise.all (promises);
         const spotMarkets = promises[0];
-        const contractMarkets = promises[1];
-        return this.arrayConcat (spotMarkets, contractMarkets);
+        //const contractMarkets = promises[1];
+        //return this.arrayConcat (spotMarkets, contractMarkets);
+        return spotMarkets;
     }
 
     async fetchSpotMarkets (params) {

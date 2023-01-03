@@ -302,12 +302,15 @@ module.exports = class cryptocom extends Exchange {
          * @param {object} params extra parameters specific to the exchange api endpoint
          * @returns {[object]} an array of objects representing market data
          */
-        let promises = [ this.fetchSpotMarkets (params), this.fetchDerivativesMarkets (params) ];
+        let promises = [
+            this.fetchSpotMarkets (params),
+            //this.fetchDerivativesMarkets (params)
+        ];
         promises = await Promise.all (promises);
         const spotMarkets = promises[0];
-        const derivativeMarkets = promises[1];
-        const markets = this.arrayConcat (spotMarkets, derivativeMarkets);
-        return markets;
+        //const derivativeMarkets = promises[1];
+        //const markets = this.arrayConcat (spotMarkets, derivativeMarkets);
+        return spotMarkets;
     }
 
     async fetchSpotMarkets (params = {}) {
