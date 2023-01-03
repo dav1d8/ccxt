@@ -2,7 +2,7 @@
 
 # -----------------------------------------------------------------------------
 
-__version__ = '2.1.82'
+__version__ = '2.5.13'
 
 # -----------------------------------------------------------------------------
 
@@ -166,13 +166,11 @@ class Exchange(BaseExchange):
                 return key
         return None
 
-    def format_scientific_notation_ftx(self, n):
-        if n == 0:
-            return '0e-00'
-        return format(n, 'g')
-
     async def watch_ticker(self, symbol, params={}):
         raise NotSupported(self.id + '.watch_ticker() not implemented yet')
+
+    async def watch_tickers(self, symbols=None, params={}):
+        raise NotSupported(self.id + '.watch_tickers() not implemented yet')
 
     async def watch_order_book(self, symbol, limit=None, params={}):
         raise NotSupported(self.id + '.watch_order_book() not implemented yet')

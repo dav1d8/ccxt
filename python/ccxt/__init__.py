@@ -22,7 +22,7 @@
 
 # ----------------------------------------------------------------------------
 
-__version__ = '2.1.82'
+__version__ = '2.5.13'
 
 # ----------------------------------------------------------------------------
 
@@ -73,11 +73,9 @@ from ccxt.base.errors import InvalidNonce                             # noqa: F4
 from ccxt.base.errors import RequestTimeout                           # noqa: F401
 from ccxt.base.errors import error_hierarchy                          # noqa: F401
 
-from ccxt.aax import aax                                              # noqa: F401
 from ccxt.alpaca import alpaca                                        # noqa: F401
 from ccxt.ascendex import ascendex                                    # noqa: F401
 from ccxt.bequant import bequant                                      # noqa: F401
-from ccxt.bibox import bibox                                          # noqa: F401
 from ccxt.bigone import bigone                                        # noqa: F401
 from ccxt.binance import binance                                      # noqa: F401
 from ccxt.binancecoinm import binancecoinm                            # noqa: F401
@@ -114,9 +112,7 @@ from ccxt.btcmarkets import btcmarkets                                # noqa: F4
 from ccxt.btctradeua import btctradeua                                # noqa: F401
 from ccxt.btcturk import btcturk                                      # noqa: F401
 from ccxt.buda import buda                                            # noqa: F401
-from ccxt.bw import bw                                                # noqa: F401
 from ccxt.bybit import bybit                                          # noqa: F401
-from ccxt.bytetrade import bytetrade                                  # noqa: F401
 from ccxt.cex import cex                                              # noqa: F401
 from ccxt.coinbase import coinbase                                    # noqa: F401
 from ccxt.coinbaseprime import coinbaseprime                          # noqa: F401
@@ -127,7 +123,6 @@ from ccxt.coinfalcon import coinfalcon                                # noqa: F4
 from ccxt.coinmate import coinmate                                    # noqa: F401
 from ccxt.coinone import coinone                                      # noqa: F401
 from ccxt.coinspot import coinspot                                    # noqa: F401
-from ccxt.crex24 import crex24                                        # noqa: F401
 from ccxt.cryptocom import cryptocom                                  # noqa: F401
 from ccxt.currencycom import currencycom                              # noqa: F401
 from ccxt.delta import delta                                          # noqa: F401
@@ -156,7 +151,6 @@ from ccxt.kuna import kuna                                            # noqa: F4
 from ccxt.latoken import latoken                                      # noqa: F401
 from ccxt.lbank import lbank                                          # noqa: F401
 from ccxt.lbank2 import lbank2                                        # noqa: F401
-from ccxt.liquid import liquid                                        # noqa: F401
 from ccxt.luno import luno                                            # noqa: F401
 from ccxt.lykke import lykke                                          # noqa: F401
 from ccxt.mercado import mercado                                      # noqa: F401
@@ -173,7 +167,6 @@ from ccxt.paymium import paymium                                      # noqa: F4
 from ccxt.phemex import phemex                                        # noqa: F401
 from ccxt.poloniex import poloniex                                    # noqa: F401
 from ccxt.probit import probit                                        # noqa: F401
-from ccxt.qtrade import qtrade                                        # noqa: F401
 from ccxt.ripio import ripio                                          # noqa: F401
 from ccxt.stex import stex                                            # noqa: F401
 from ccxt.therock import therock                                      # noqa: F401
@@ -192,11 +185,9 @@ from ccxt.zipmex import zipmex                                        # noqa: F4
 from ccxt.zonda import zonda                                          # noqa: F401
 
 exchanges = [
-    'aax',
     'alpaca',
     'ascendex',
     'bequant',
-    'bibox',
     'bigone',
     'binance',
     'binancecoinm',
@@ -233,9 +224,7 @@ exchanges = [
     'btctradeua',
     'btcturk',
     'buda',
-    'bw',
     'bybit',
-    'bytetrade',
     'cex',
     'coinbase',
     'coinbaseprime',
@@ -246,7 +235,6 @@ exchanges = [
     'coinmate',
     'coinone',
     'coinspot',
-    'crex24',
     'cryptocom',
     'currencycom',
     'delta',
@@ -275,7 +263,6 @@ exchanges = [
     'latoken',
     'lbank',
     'lbank2',
-    'liquid',
     'luno',
     'lykke',
     'mercado',
@@ -292,7 +279,6 @@ exchanges = [
     'phemex',
     'poloniex',
     'probit',
-    'qtrade',
     'ripio',
     'stex',
     'therock',
