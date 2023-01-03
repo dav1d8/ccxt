@@ -4364,6 +4364,7 @@ module.exports = class mexc3 extends Exchange {
             'spot': 'SPOT',
             'swap': 'FUTURES',
             'margin': 'ISOLATED_MARGIN',
+            'isolated': 'ISOLATED_MARGIN',
         };
         const fromId = this.safeString (accounts, fromAccount);
         const toId = this.safeString (accounts, toAccount);
