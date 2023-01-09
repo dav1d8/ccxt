@@ -1513,6 +1513,8 @@ module.exports = class bitmart extends Exchange {
         const debt = this.safeString (entry, 'borrow_unpaid');
         const interest = this.safeString (entry, 'interest_unpaid');
         account['debt'] = Precise.stringAdd (debt, interest);
+        account['borrowed'] = this.safeString (entry, 'borrow_unpaid');
+        account['interest'] = this.safeString (entry, 'interest_unpaid');
         return account;
     }
 
@@ -1800,6 +1802,7 @@ module.exports = class bitmart extends Exchange {
                 '6': 'closed', // Fully filled
                 '7': 'canceling', // Canceling
                 '8': 'canceled', // Canceled
+                '11': 'canceled', // Partially filled and canceled
             },
             'swap': {
                 '1': 'open', // Submitting
@@ -2019,14 +2022,21 @@ module.exports = class bitmart extends Exchange {
         }
         const request = {
             'symbol': market['id'],
-            'offset': 1, // max offset * limit < 500
-            'N': 100, // max limit is 100
+            'order_mode': 'all',
         };
         if (status === 'open') {
+            //Status 9:
+            // 4=Order success, Pending for fulfilment
+            // 5=Partially filled
             request['status'] = 9;
         } else if (status === 'closed') {
-            request['status'] = 6;
+            //Status 10:
+            // 6=Fully filled
+            // 8=Canceled
+            // 11=Partially filled and canceled
+            request['status'] = 10;
         } else if (status === 'canceled') {
+            // 8=Canceled
             request['status'] = 8;
         } else {
             request['status'] = status;
