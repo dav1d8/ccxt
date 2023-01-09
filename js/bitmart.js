@@ -1652,11 +1652,21 @@ module.exports = class bitmart extends Exchange {
         //
         const marketId = this.safeString (fee, 'symbol');
         const symbol = this.safeSymbol (marketId);
+        const buyMaker = this.safeNumber (fee, 'buy_maker_fee_rate');
+        const buyTaker = this.safeNumber (fee, 'buy_taker_fee_rate');
+        const sellMaker = this.safeNumber (fee, 'sell_maker_fee_rate');
+        const sellTaker = this.safeNumber (fee, 'sell_taker_fee_rate');
+        if (buyMaker !== sellMaker) {
+            throw new Error("Buy and sell maker fees are different.");
+        }
+        if (buyTaker !== sellTaker) {
+            throw new Error("Buy and sell taker fees are different.");
+        }
         return {
             'info': fee,
             'symbol': symbol,
-            'maker': this.safeNumber (fee, 'maker_fee_rate'),
-            'taker': this.safeNumber (fee, 'taker_fee_rate'),
+            'maker': buyMaker,
+            'taker': buyTaker,
         };
     }
 
