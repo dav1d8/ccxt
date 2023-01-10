@@ -455,8 +455,9 @@ module.exports = class bitfinex2 extends Exchange {
         spotMarketsInfo = this.safeValue (spotMarketsInfo, 0, []);
         //futuresMarketsInfo = this.safeValue (futuresMarketsInfo, 0, []);
         const markets = spotMarketsInfo;//this.arrayConcat (spotMarketsInfo, futuresMarketsInfo);
-        let marginIds = await this.publicGetConfPubListPairMargin (params);
-        marginIds = this.safeValue (marginIds, 0, []);
+        //Disable margin, it's different than on other exchanges and we need to go more into the details before we use it.
+        let marginIds = [];//await this.publicGetConfPubListPairMargin (params);
+        //marginIds = this.safeValue (marginIds, 0, []);
         //
         //    [
         //        "1INCH:USD",
