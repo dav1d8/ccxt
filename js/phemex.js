@@ -2338,7 +2338,7 @@ module.exports = class phemex extends Exchange {
         }
         await this.loadMarkets ();
         const market = this.market (symbol);
-        const method = market['spot'] ? 'privateGetSpotOrders' : 'privateGetExchangeOrderList';
+        const method = market['spot'] ? 'privateGetExchangeSpotOrder' : 'privateGetExchangeOrderList';
         const request = {
             'symbol': market['id'],
         };
