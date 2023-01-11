@@ -4892,12 +4892,12 @@ module.exports = class gate extends Exchange {
             // eslint-disable-next-line quotes
             const payload = payloadArray.join ("\n");
             const signature = this.hmac (this.encode (payload), this.encode (this.secret), 'sha512');
-            headers = Object.assign({}, headers !== undefined ? headers : {}, {
+            headers = this.extend({
                 'KEY': this.apiKey,
                 'Timestamp': timestampString,
                 'SIGN': signature,
                 'Content-Type': 'application/json',
-            });
+            }, headers);
         }
         return { 'url': url, 'method': method, 'body': body, 'headers': headers };
     }

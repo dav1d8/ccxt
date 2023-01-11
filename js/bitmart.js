@@ -3048,11 +3048,11 @@ module.exports = class bitmart extends Exchange {
         if (api === 'private') {
             this.checkRequiredCredentials ();
             const timestamp = this.milliseconds ().toString ();
-            headers = {
+            headers = this.extend({
                 'X-BM-KEY': this.apiKey,
                 'X-BM-TIMESTAMP': timestamp,
                 'Content-Type': 'application/json',
-            };
+            }, headers);
             if (!getOrDelete) {
                 body = this.json (query);
                 queryString = body;

@@ -4879,10 +4879,10 @@ module.exports = class mexc3 extends Exchange {
                 this.checkRequiredCredentials ();
                 const signature = this.hmac (this.encode (paramsEncoded), this.encode (this.secret), 'sha256');
                 url += '&' + 'signature=' + signature;
-                headers = {
+                headers = this.extend(headers, {
                     'X-MEXC-APIKEY': this.apiKey,
                     'source': this.safeString (this.options, 'broker', 'CCXT'),
-                };
+                });
             }
             if (method === 'POST') {
                 headers['Content-Type'] = 'application/json';
@@ -4898,11 +4898,11 @@ module.exports = class mexc3 extends Exchange {
                 this.checkRequiredCredentials ();
                 const timestamp = this.milliseconds ().toString ();
                 let auth = '';
-                headers = {
+                headers = this.extend({
                     'ApiKey': this.apiKey,
                     'Request-Time': timestamp,
                     'Content-Type': 'application/json',
-                };
+                }, headers);
                 if (method === 'POST') {
                     auth = this.json (params);
                     body = auth;

@@ -3457,10 +3457,10 @@ module.exports = class phemex extends Exchange {
             const xPhemexRequestExpiry = this.safeInteger (this.options, 'x-phemex-request-expiry', 60);
             const expiry = this.sum (timestamp, xPhemexRequestExpiry);
             const expiryString = expiry.toString ();
-            headers = {
+            headers = this.extend({
                 'x-phemex-access-token': this.apiKey,
                 'x-phemex-request-expiry': expiryString,
-            };
+            }, headers);
             let payload = '';
             if (method === 'POST') {
                 payload = this.json (params);
@@ -3472,14 +3472,16 @@ module.exports = class phemex extends Exchange {
         }
         if (api === 'web') {
             const a = () => Math.floor(65536 * (1 + Math.random())).toString(16).substring(1);
-            headers = {'bid': `${a()}${a()}-${a()}-${a()}-${a()}-${a()}${a()}${a()}`};
+            headers = this.extend({
+                'bid': `${a()}${a()}-${a()}-${a()}-${a()}-${a()}${a()}${a()}`
+            }, headers);
         }
         if (api === "webPrivate") {
-            headers = {
+            headers = this.extend({
                 //Not used, this needs to be refreshed to an actual one from the web
                 'bid': '7532b67b-9b3d-8c04-2a3c-745e56a5f4bc',
                 'phemex-auth-token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHRyYSI6ImE5ZDUxYTE3LTgyOWQtNDNiMC04YTFjLTBmNmEwMWVkN2YyMC0xNjY4MDA3NzQ5MjU1IiwiaXNzIjoiUEhFTUVYIiwiZXhwIjoxNjcwMzMwOTY0LCJzdWJqIjo0NDY2NTEzLCJib2R5Ijoi8KOvjfCon4PwqpOC64iE5o-08J2Vv-OtmeWpqvCqqrrklbEiLCJpYXQiOjE2NjkxMjEzNjR9.neGYuX5umnH4jNEYWYXk0GAtfs5Azb6WH-tVUX6LHJc',
-            };
+            }, headers);
         }
         url = this.implodeHostname (this.urls['api'][api]) + url;
         return { 'url': url, 'method': method, 'body': body, 'headers': headers };

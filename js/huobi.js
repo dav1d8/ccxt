@@ -5815,13 +5815,13 @@ module.exports = class huobi extends Exchange {
                 url += '?' + auth;
                 if (method === 'POST') {
                     body = this.json (query);
-                    headers = {
+                    headers = this.extend({
                         'Content-Type': 'application/json',
-                    };
+                    }, headers);
                 } else {
-                    headers = {
+                    headers = this.extend({
                         'Content-Type': 'application/x-www-form-urlencoded',
-                    };
+                    }, headers);
                 }
             } else {
                 if (Object.keys (query).length) {
@@ -5876,13 +5876,13 @@ module.exports = class huobi extends Exchange {
                     if (body.length === 2) {
                         body = '{}';
                     }
-                    headers = {
+                    headers = this.extend({
                         'Content-Type': 'application/json',
-                    };
+                    }, headers);
                 } else {
-                    headers = {
+                    headers = this.extend({
                         'Content-Type': 'application/x-www-form-urlencoded',
-                    };
+                    }, headers);
                 }
             }
             url = this.implodeParams (this.urls['api'][type], {

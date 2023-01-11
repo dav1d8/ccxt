@@ -7098,20 +7098,20 @@ module.exports = class bybit extends Exchange {
                 }
                 const payload = timestamp + this.apiKey + body;
                 const signature = this.hmac (this.encode (payload), this.encode (this.secret), 'sha256', 'hex');
-                headers = {
+                headers = this.extend({
                     'Content-Type': 'application/json',
                     'X-BAPI-API-KEY': this.apiKey,
                     'X-BAPI-TIMESTAMP': timestamp,
                     'X-BAPI-SIGN': signature,
-                };
+                }, headers);
             } else if (isV3UnifiedMargin) {
-                headers = {
+                headers = this.extend({
                     'Content-Type': 'application/json',
                     'X-BAPI-API-KEY': this.apiKey,
                     'X-BAPI-SIGN-TYPE': '2',
                     'X-BAPI-TIMESTAMP': timestamp,
                     'X-BAPI-RECV-WINDOW': this.options['recvWindow'].toString (),
-                };
+                }, headers);
                 const query = params;
                 const queryEncoded = this.rawencode (query);
                 const auth_base = timestamp.toString () + this.apiKey + this.options['recvWindow'].toString ();
@@ -7144,14 +7144,14 @@ module.exports = class bybit extends Exchange {
                     });
                     if (isSpot) {
                         body = this.urlencode (extendedQuery);
-                        headers = {
+                        headers = this.extend({
                             'Content-Type': 'application/x-www-form-urlencoded',
-                        };
+                        }, headers);
                     } else {
                         body = this.json (extendedQuery);
-                        headers = {
+                        headers = this.extend({
                             'Content-Type': 'application/json',
-                        };
+                        }, headers);
                     }
                 } else {
                     if (path === 'contract/v3/private/order/list') {

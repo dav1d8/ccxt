@@ -2553,12 +2553,12 @@ module.exports = class bitfinex2 extends Exchange {
             body = this.json (query);
             const auth = '/api/' + request + nonce + body;
             const signature = this.hmac (this.encode (auth), this.encode (this.secret), 'sha384');
-            headers = {
+            headers = this.extend({
                 'bfx-nonce': nonce,
                 'bfx-apikey': this.apiKey,
                 'bfx-signature': signature,
                 'Content-Type': 'application/json',
-            };
+            }, headers);
         }
         return { 'url': url, 'method': method, 'body': body, 'headers': headers };
     }

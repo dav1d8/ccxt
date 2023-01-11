@@ -4586,14 +4586,14 @@ module.exports = class okx extends Exchange {
         } else if (api === 'private') {
             this.checkRequiredCredentials ();
             const timestamp = this.iso8601 (this.milliseconds ());
-            headers = {
+            headers = this.extend({
                 'OK-ACCESS-KEY': this.apiKey,
                 'OK-ACCESS-PASSPHRASE': this.password,
                 'OK-ACCESS-TIMESTAMP': timestamp,
                 // 'OK-FROM': '',
                 // 'OK-TO': '',
                 // 'OK-LIMIT': '',
-            };
+            }, headers);
             let auth = timestamp + method + request;
             if (method === 'GET') {
                 if (Object.keys (query).length) {

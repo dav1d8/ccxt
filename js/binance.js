@@ -6414,9 +6414,9 @@ module.exports = class binance extends Exchange {
         }
         if (path === 'historicalTrades') {
             if (this.apiKey) {
-                headers = {
+                headers = this.extend({
                     'X-MBX-APIKEY': this.apiKey,
-                };
+                }, headers);
             } else {
                 throw new AuthenticationError (this.id + ' historicalTrades endpoint requires `apiKey` credential');
             }
@@ -6425,10 +6425,10 @@ module.exports = class binance extends Exchange {
         if (userDataStream) {
             if (this.apiKey) {
                 // v1 special case for userDataStream
-                headers = {
+                headers = this.extend({
                     'X-MBX-APIKEY': this.apiKey,
                     'Content-Type': 'application/x-www-form-urlencoded',
-                };
+                }, headers);
                 if (method !== 'GET') {
                     body = this.urlencode (params);
                 }
@@ -6463,9 +6463,9 @@ module.exports = class binance extends Exchange {
                 signature = this.hmac (this.encode (query), this.encode (this.secret));
             }
             query += '&' + 'signature=' + signature;
-            headers = {
+            headers = this.extend({
                 'X-MBX-APIKEY': this.apiKey,
-            };
+            }, headers);
             if ((method === 'GET') || (method === 'DELETE') || (api === 'wapi')) {
                 url += '?' + query;
             } else {

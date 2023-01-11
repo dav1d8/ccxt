@@ -1851,13 +1851,13 @@ module.exports = class coinbasepro extends Exchange {
                 throw new AuthenticationError (this.id + ' sign() invalid base64 secret');
             }
             const signature = this.hmac (this.encode (what), secret, 'sha256', 'base64');
-            headers = {
+            headers = this.extend({
                 'CB-ACCESS-KEY': this.apiKey,
                 'CB-ACCESS-SIGN': signature,
                 'CB-ACCESS-TIMESTAMP': nonce,
                 'CB-ACCESS-PASSPHRASE': this.password,
                 'Content-Type': 'application/json',
-            };
+            }, headers);
         }
         return { 'url': url, 'method': method, 'body': body, 'headers': headers };
     }

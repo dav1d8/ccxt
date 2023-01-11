@@ -2470,9 +2470,9 @@ module.exports = class cryptocom extends Exchange {
                 const arrayString = '[]';
                 body = body.replace (arrayString, paramsString);
             }
-            headers = {
+            headers = this.extend({
                 'Content-Type': 'application/json',
-            };
+            }, headers);
         }
         return { 'url': url, 'method': method, 'body': body, 'headers': headers };
     }
