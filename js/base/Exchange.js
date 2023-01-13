@@ -966,7 +966,7 @@ module.exports = class Exchange {
     }
 
     safeBalance (balance) {
-        const balances = this.omit (balance, [ 'info', 'timestamp', 'datetime', 'free', 'used', 'total', 'borrowed', 'interest' ]);
+        const balances = this.omit (balance, [ 'info', 'timestamp', 'datetime', 'free', 'used', 'total', 'debt', 'borrowed', 'interest' ]);
         const codes = Object.keys (balances);
         balance['free'] = {};
         balance['used'] = {};
