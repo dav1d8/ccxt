@@ -142,7 +142,7 @@ const decimalToPrecision = (x, roundingMode
                 x = x - missing
             }
         }
-        return decimalToPrecision (x, ROUND, newNumPrecisionDigits, DECIMAL_PLACES, paddingMode);
+        return decimalToPrecision (x, roundingMode, newNumPrecisionDigits, DECIMAL_PLACES, paddingMode);
     }
 
 /*  Convert to a string (if needed), skip leading minus sign (if any)   */
