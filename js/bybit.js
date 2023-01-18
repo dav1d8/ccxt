@@ -1142,10 +1142,10 @@ module.exports = class bybit extends Exchange {
             const symbol = base + '/' + quote;
             const active = this.safeInteger (market, 'showStatus') === 1;
             const quotePrecision = this.safeNumber (market, 'quotePrecision');
-            const crossMarginToken = this.safeValue(crossMarginTokens, baseId);
-            const leverage = this.safeInteger(crossMarginToken, 'leverageRatio');
+            const baseCrossMarginToken = this.safeValue(crossMarginTokens, baseId);
+            const quoteCrossMarginToken = this.safeValue(crossMarginTokens, quoteId);
+            const leverage = this.safeInteger(baseCrossMarginToken, 'leverageRatio');
             const margin = leverage !== undefined;
-            market["crossMarginToken"] = crossMarginToken;
             result.push ({
                 'id': id,
                 'symbol': symbol,
@@ -1160,6 +1160,10 @@ module.exports = class bybit extends Exchange {
                 'margin': margin,
                 'crossMargin': margin,
                 'crossMaxLeverage': leverage,
+                'crossBaseBorrowLimit': margin ? this.safeNumber(baseCrossMarginToken, 'userMaxLoanRemainQty') : undefined,
+                'crossBaseBorrowMinimumLimit': margin ? this.safeNumber(baseCrossMarginToken, 'userMinLoanQty') : undefined,
+                'crossQuoteBorrowLimit': margin ? this.safeNumber(quoteCrossMarginToken, 'userMaxLoanRemainQty') : undefined,
+                'crossQuoteBorrowMinimumLimit': margin ? this.safeNumber(quoteCrossMarginToken, 'userMinLoanQty') : undefined,
                 'isolatedMargin': false,
                 'isolatedMaxLeverage': undefined,
                 'swap': false,
