@@ -22,14 +22,20 @@ function bisectLeft(array, x) {
 
 const SIZE = 1024
 const SEED = new Float64Array (new Array (SIZE).fill (Number.MAX_VALUE))
+const SEED2 = new Float64Array (new Array (SIZE).fill (0))
 
-class OrderBookSide extends Array {
+class OrderBookSide {
     constructor (deltas = [], depth = undefined) {
-        super ()
         // a string-keyed dictionary of price levels / ids / indices
         Object.defineProperty (this, 'index', {
-            __proto__: null, // make it invisible
+            //__proto__: null, // make it invisible
             value: new Float64Array (SEED),
+            writable: true,
+        })
+        // a string-keyed dictionary of sizes
+        Object.defineProperty (this, 'index2', {
+            //__proto__: null, // make it invisible
+            value: new Float64Array (SEED2),
             writable: true,
         })
         Object.defineProperty (this, 'depth', {
@@ -44,20 +50,38 @@ class OrderBookSide extends Array {
         }
     }
 
+    get prices() {
+        return this.index;
+    }
+
+    get amounts() {
+        return this.index2;
+    }
+
     storeArray (delta) {
         const price = delta[0]
         const size = delta[1]
         const index_price = this.side ? -price : price
-        const index = bisectLeft (this.index, index_price)
+        const biggest_index_price = this.index[this.length - 1];
+        let index;
+        if ((this.length === 0 || index_price > biggest_index_price) && size) {
+            index = this.length;
+        } else {
+            index = bisectLeft (this.index, index_price)
+        }
         if (size) {
             if (this.index[index] === index_price) {
-                this[index][1] = size
+                this.index2[index] = size
             } else {
                 this.length++
-                this.index.copyWithin (index + 1, index, this.index.length)
-                this.index[index] = index_price
-                this.copyWithin (index + 1, index, this.length)
-                this[index] = delta
+                if (this.index[index] !== Number.MAX_VALUE) {
+                    this.index.copyWithin(index + 1, index, this.index.length)
+                }
+                this.index[index] = index_price;
+                if (this.index2[index] !== 0) {
+                    this.index2.copyWithin(index + 1, index, this.index2.length)
+                }
+                this.index2[index] = size
                 // in the rare case of very large orderbooks being sent
                 if (this.length > this.index.length - 1) {
                     const existing = Array.from (this.index)
@@ -65,11 +89,18 @@ class OrderBookSide extends Array {
                     existing.fill (Number.MAX_VALUE, this.index.length)
                     this.index = new Float64Array (existing)
                 }
+                if (this.length > this.index2.length - 1) {
+                    const existing = Array.from(this.index2)
+                    existing.length = this.length * 2
+                    existing.fill(0, this.index2.length)
+                    this.index2 = new Float64Array(existing)
+                }
             }
         } else if (this.index[index] === index_price) {
             this.index.copyWithin (index, index + 1, this.index.length)
             this.index[this.length - 1] = Number.MAX_VALUE
-            this.copyWithin (index, index + 1, this.length)
+            this.index2.copyWithin (index, index + 1, this.index2.length)
+            this.index2[this.length - 1] = 0
             this.length--
         }
     }
@@ -96,42 +127,6 @@ class OrderBookSide extends Array {
 // this class stores vector arrays of values indexed by price
 
 class CountedOrderBookSide extends OrderBookSide {
-    store (price, size, count) {
-        this.storeArray ([ price, size, count ])
-    }
-
-    storeArray (delta) {
-        const price = delta[0]
-        const size = delta[1]
-        const count = delta[2]
-        const index_price = this.side ? -price : price
-        const index = bisectLeft (this.index, index_price)
-        if (size && count) {
-            if (this.index[index] === index_price) {
-                const entry = this[index]
-                entry[1] = size
-                entry[2] = count
-            } else {
-                this.length++
-                this.index.copyWithin (index + 1, index, this.index.length)
-                this.index[index] = index_price
-                this.copyWithin (index + 1, index, this.length)
-                this[index] = delta
-                // in the rare case of very large orderbooks being sent
-                if (this.length > this.index.length - 1) {
-                    const existing = Array.from (this.index)
-                    existing.length = this.length * 2
-                    existing.fill (Number.MAX_VALUE, this.index.length)
-                    this.index = new Float64Array (existing)
-                }
-            }
-        } else if (this.index[index] === index_price) {
-            this.index.copyWithin (index, index + 1, this.index.length)
-            this.index[this.length - 1] = Number.MAX_VALUE
-            this.copyWithin (index, index + 1, this.length)
-            this.length--
-        }
-    }
 }
 
 // ----------------------------------------------------------------------------

@@ -80,6 +80,7 @@ class OrderBook {
 
     reset (snapshot = {}) {
         this.asks.index.fill (Number.MAX_VALUE)
+        this.asks.index2.fill (0)
         this.asks.length = 0
         if (snapshot.asks) {
             for (let i = 0; i < snapshot.asks.length; i++) {
@@ -87,6 +88,7 @@ class OrderBook {
             }
         }
         this.bids.index.fill (Number.MAX_VALUE)
+        this.bids.index2.fill (0)
         this.bids.length = 0
         if (snapshot.bids) {
             for (let i = 0; i < snapshot.bids.length; i++) {

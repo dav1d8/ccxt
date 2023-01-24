@@ -119,9 +119,15 @@ declare module 'ccxt' {
         info: any;
     }
 
+    export interface OrderBookSide {
+        prices: Float64Array;
+        amounts: Float64Array;
+        length: number;
+    }
+
     export interface OrderBook {
-        asks: [number, number][];
-        bids: [number, number][];
+        asks: OrderBookSide;
+        bids: OrderBookSide;
         datetime: string;
         timestamp: number;
         nonce: number;
