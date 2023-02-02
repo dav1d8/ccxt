@@ -442,6 +442,22 @@ module.exports = class bitfinex2 extends Exchange {
         };
     }
 
+    //NOTE: Copied from base Exchange, here we load currencies first and markets only after that.
+    //      Markets need currency synonyms to be loaded first.
+    async loadMarketsHelper (reload = false, params = {}) {
+        if (!reload && this.markets) {
+            if (!this.markets_by_id) {
+                return this.setMarkets (this.markets)
+            }
+            return this.markets
+        }
+
+        const currencies = await this.fetchCurrencies ()
+        const markets = await this.fetchMarkets (params);
+
+        return this.setMarkets (markets, currencies)
+    }
+
     async fetchMarkets (params = {}) {
         /**
          * @method
