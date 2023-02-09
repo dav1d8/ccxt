@@ -224,6 +224,7 @@ module.exports = class Exchange {
                 'price': { 'min': undefined, 'max': undefined },
                 'cost': { 'min': undefined, 'max': undefined },
             },
+            parallelLoadMarketsAndCurrencies: true,
         } // return
     } // describe ()
 
@@ -643,14 +644,21 @@ module.exports = class Exchange {
             }
             return this.markets
         }
-        //NOTE: We fetch currencies and markets at the same time, first the currencies, so that they run together
-        const promises = [];
-        // only call if exchange API provides endpoint (true), thus avoid emulated versions ('emulated')
-        promises.push(this.has.fetchCurrencies === true ? this.fetchCurrencies () : Promise.resolve(undefined))
-        promises.push(this.fetchMarkets (params));
+        if (this.parallelLoadMarketsAndCurrencies === true) {
+            //NOTE: We fetch currencies and markets at the same time, first the currencies, so that they run together
+            const promises = [];
+            // only call if exchange API provides endpoint (true), thus avoid emulated versions ('emulated')
+            promises.push(this.has.fetchCurrencies === true ? this.fetchCurrencies () : Promise.resolve(undefined))
+            promises.push(this.fetchMarkets (params));
 
-        const [currencies, markets] = await Promise.all(promises);
-        return this.setMarkets (markets, currencies)
+            const [currencies, markets] = await Promise.all(promises);
+            return this.setMarkets (markets, currencies)
+        } else {
+            const currencies = await this.fetchCurrencies ()
+            const markets = await this.fetchMarkets (params);
+
+            return this.setMarkets (markets, currencies)
+        }
     }
 
     loadMarkets (reload = false, params = {}) {
