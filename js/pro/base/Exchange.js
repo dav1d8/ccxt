@@ -53,6 +53,14 @@ module.exports = class Exchange extends BaseExchange {
             const onConnected = this.onConnected.bind (this);
             // decide client type here: ws / signalr / socketio
             const wsOptions = this.safeValue (this.options, 'ws', {});
+            let agent;
+            if (this.agent) {
+                agent = this.agent;
+            } else if (this.httpAgent && url.indexOf ('ws://') === 0) {
+                agent = this.httpAgent;
+            } else if (this.httpsAgent && url.indexOf ('wss://') === 0) {
+                agent = this.httpsAgent;
+            }
             const options = this.deepExtend (this.streaming, {
                 'log': this.log ? this.log.bind (this) : this.log,
                 'ping': this.ping ? this.ping.bind (this) : this.ping,
@@ -60,7 +68,7 @@ module.exports = class Exchange extends BaseExchange {
                 'throttle': throttle (this.tokenBucket),
                 // add support for proxies
                 'options': {
-                    'agent': this.agent || this.httpsAgent || this.httpAgent,
+                    'agent': agent,
                     'perMessageDeflate': false,
                 }
                 //'connectionTimeout': 10000,
@@ -100,6 +108,11 @@ module.exports = class Exchange extends BaseExchange {
         //
         // The following is a longer version of this method with comments
         //
+        if (typeof this.wsProxy === 'function') {
+            url = this.wsProxy (url)
+        } else if (typeof this.wsProxy === 'string') {
+            url = this.wsProxy + url
+        }
         const client = this.client (url);
         const backoffDelay = this.nextBackoffDelay !== undefined ? this.nextBackoffDelay : 0;
         //
