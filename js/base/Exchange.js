@@ -1882,9 +1882,38 @@ module.exports = class Exchange {
             'bids': this.sortBy (bids, 0, true),
             'asks': this.sortBy (asks, 0),
             'timestamp': timestamp,
-            'datetime': this.iso8601 (timestamp),
+            //'datetime': this.iso8601 (timestamp),
             'nonce': undefined,
         };
+    }
+
+    parseOrderBookBinary (message, symbol, timestamp = undefined) {
+        const bids = this.parseBidsBinary (message);
+        const asks = this.parseAsksBinary (message);
+        return {
+            'symbol': symbol,
+            'bids': this.sortBy (bids, 0, true),
+            'asks': this.sortBy (asks, 0),
+            'timestamp': timestamp,
+            //'datetime': this.iso8601 (timestamp),
+            'nonce': undefined,
+        };
+    }
+
+    parseAsksBinary (message) {
+        const result = [];
+        for (let i = 0; i < message.asksLength; i++) {
+            result.push ([message.getAsk(i, 0), message.getAsk(i, 1)]);
+        }
+        return result;
+    }
+
+    parseBidsBinary (message) {
+        const result = [];
+        for (let i = 0; i < message.bidsLength; i++) {
+            result.push ([message.getBid(i, 0), message.getBid(i, 1)]);
+        }
+        return result;
     }
 
     parseOHLCVs (ohlcvs, market = undefined, timeframe = '1m', since = undefined, limit = undefined) {

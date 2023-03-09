@@ -6,6 +6,7 @@ const binanceRest = require ('../binance.js');
 const Precise = require ('../base/Precise');
 const { ExchangeError } = require ('../base/errors');
 const { ArrayCache, ArrayCacheByTimestamp, ArrayCacheBySymbolById } = require ('./base/Cache');
+const { OrderBookUpdate } = require('./structurae/Binance');
 
 // -----------------------------------------------------------------------------
 
@@ -261,12 +262,17 @@ module.exports = class binance extends binanceRest {
 
     handleOrderBookMessage (client, message, orderbook) {
         const u = this.safeInteger (message, 'u');
-        this.handleDeltas (orderbook['asks'], this.safeValue (message, 'a', []));
-        this.handleDeltas (orderbook['bids'], this.safeValue (message, 'b', []));
+        if (message instanceof OrderBookUpdate) {
+            this.handleDeltasAsksBinary(orderbook['asks'], message);
+            this.handleDeltasBidsBinary(orderbook['bids'], message);
+        } else {
+            this.handleDeltas (orderbook['asks'], this.safeValue (message, 'a', []));
+            this.handleDeltas (orderbook['bids'], this.safeValue (message, 'b', []));
+        }
         orderbook['nonce'] = u;
         const timestamp = this.safeInteger (message, 'E');
         orderbook['timestamp'] = timestamp;
-        orderbook['datetime'] = this.iso8601 (timestamp);
+        //orderbook['datetime'] = this.iso8601 (timestamp);
         return orderbook;
     }
 
@@ -1473,6 +1479,10 @@ module.exports = class binance extends binanceRest {
     }
 
     handleMessage (client, message) {
+        if (message instanceof Buffer) {
+            message = new OrderBookUpdate(message);
+        }
+
         const methods = {
             'depthUpdate': this.handleOrderBook,
             'trade': this.handleTrade,

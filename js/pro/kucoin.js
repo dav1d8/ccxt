@@ -5,6 +5,7 @@
 const kucoinRest = require ('../kucoin.js');
 const { ExchangeError, InvalidNonce, NetworkError } = require ('../base/errors');
 const { ArrayCache, ArrayCacheByTimestamp, ArrayCacheBySymbolById } = require ('./base/Cache');
+const { OrderBookUpdate } = require('./structurae/Kucoin');
 
 //  ---------------------------------------------------------------------------
 
@@ -540,7 +541,12 @@ module.exports = class kucoin extends kucoinRest {
         const symbol = subscription['symbol'];
         const data = this.safeValue (message, 'data');
         const timestamp = this.safeInteger (data, 'timestamp');
-        const snapshot = this.parseOrderBook (data, symbol, timestamp, 'bids', 'asks', 0, 1);
+        let snapshot;
+        if (message instanceof OrderBookUpdate) {
+            snapshot = this.parseOrderBookBinary(message, symbol, timestamp);
+        } else {
+            snapshot = this.parseOrderBook(data, symbol, timestamp, 'bids', 'asks', 0, 1);
+        }
         const orderbook = this.orderbooks[symbol];
         orderbook.reset (snapshot);
         this.orderbooks[symbol] = orderbook;
@@ -1055,6 +1061,10 @@ module.exports = class kucoin extends kucoinRest {
     }
 
     handleMessage (client, message) {
+        if (message instanceof Buffer) {
+            message = new OrderBookUpdate(message);
+        }
+
         if (this.handleErrorMessage (client, message)) {
             const type = this.safeString (message, 'type');
             const methods = {

@@ -41,6 +41,22 @@ module.exports = class Exchange extends BaseExchange {
         return new CountedOrderBook (snapshot, depth);
     }
 
+    handleDeltasAsksBinary (bookside, update) {
+        for (let i = 0; i < update.asksLength; i++) {
+            const price = update.getAsk(i, 0);
+            const amount = update.getAsk(i, 1);
+            bookside.store (price, amount);
+        }
+    }
+
+    handleDeltasBidsBinary (bookside, update) {
+        for (let i = 0; i < update.bidsLength; i++) {
+            const price = update.getBid(i, 0);
+            const amount = update.getBid(i, 1);
+            bookside.store (price, amount);
+        }
+    }
+
     client (url) {
         if (this.disabled) {
             throw new ExchangeDisabled("Exchange is already disabled");

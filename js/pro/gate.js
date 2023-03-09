@@ -5,6 +5,7 @@
 const gateRest = require ('../gate.js');
 const { AuthenticationError, BadRequest, ArgumentsRequired, NotSupported, InvalidNonce } = require ('../base/errors');
 const { ArrayCache, ArrayCacheByTimestamp, ArrayCacheBySymbolById } = require ('./base/Cache');
+const { OrderBookUpdate } = require('./structurae/Gateio');
 
 //  ---------------------------------------------------------------------------
 
@@ -317,14 +318,19 @@ module.exports = class gate extends gateRest {
         // with the previous message sometimes so if the current seqNum
         // is 2 in the next message might be 3 or 4... so it is not safe to use
         if (seqNum >= nonce) {
-            const asks = this.safeValue (result, 'a', []);
-            const bids = this.safeValue (result, 'b', []);
-            this.handleDeltas (orderbook['asks'], asks);
-            this.handleDeltas (orderbook['bids'], bids);
+            if (message instanceof OrderBookUpdate) {
+                this.handleDeltasAsksBinary(orderbook['asks'], message);
+                this.handleDeltasBidsBinary(orderbook['bids'], message);
+            } else {
+                const asks = this.safeValue(result, 'a', []);
+                const bids = this.safeValue(result, 'b', []);
+                this.handleDeltas(orderbook['asks'], asks);
+                this.handleDeltas(orderbook['bids'], bids);
+            }
             orderbook['nonce'] = seqNum;
             const timestamp = this.safeInteger (result, 't');
             orderbook['timestamp'] = timestamp;
-            orderbook['datetime'] = this.iso8601 (timestamp);
+            //orderbook['datetime'] = this.iso8601 (timestamp);
             if (messageHash !== undefined) {
                 client.resolve (orderbook, messageHash);
             }
@@ -1181,7 +1187,11 @@ module.exports = class gate extends gateRest {
         //          }
         //        ]
         //    }
-        //
+
+        if (message instanceof Buffer) {
+            message = new OrderBookUpdate(message);
+        }
+
         this.handleErrorMessage (client, message);
         const event = this.safeString (message, 'event');
         if (event === 'subscribe') {

@@ -5,6 +5,7 @@
 const huobiRest = require ('../huobi.js');
 const { ExchangeError, InvalidNonce, ArgumentsRequired, BadRequest, BadSymbol, AuthenticationError } = require ('../base/errors');
 const { ArrayCache, ArrayCacheByTimestamp, ArrayCacheBySymbolById } = require ('./base/Cache');
+const { OrderBookUpdate } = require('./structurae/Huobi');
 
 //  ---------------------------------------------------------------------------
 
@@ -540,13 +541,18 @@ module.exports = class huobi extends huobiRest {
             orderbook['nonce'] = seqNum;
         }
         if ((prevSeqNum === undefined || prevSeqNum <= orderbook['nonce']) && (seqNum > orderbook['nonce'])) {
-            const asks = this.safeValue (tick, 'asks', []);
-            const bids = this.safeValue (tick, 'bids', []);
-            this.handleDeltas (orderbook['asks'], asks);
-            this.handleDeltas (orderbook['bids'], bids);
+            if (message instanceof OrderBookUpdate) {
+                this.handleDeltasAsksBinary(orderbook['asks'], message);
+                this.handleDeltasBidsBinary(orderbook['bids'], message);
+            } else {
+                const asks = this.safeValue(tick, 'asks', []);
+                const bids = this.safeValue(tick, 'bids', []);
+                this.handleDeltas(orderbook['asks'], asks);
+                this.handleDeltas(orderbook['bids'], bids);
+            }
             orderbook['nonce'] = seqNum;
             orderbook['timestamp'] = timestamp;
-            orderbook['datetime'] = this.iso8601 (timestamp);
+            //orderbook['datetime'] = this.iso8601 (timestamp);
         }
         return orderbook;
     }
@@ -1750,6 +1756,10 @@ module.exports = class huobi extends huobiRest {
     }
 
     handleMessage (client, message) {
+        if (message instanceof Buffer) {
+            message = new OrderBookUpdate(message);
+        }
+
         if (this.handleErrorMessage (client, message)) {
             //
             //     {"id":1583414227,"status":"ok","subbed":"market.btcusdt.mbp.150","ts":1583414229143}
