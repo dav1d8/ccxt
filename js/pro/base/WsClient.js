@@ -23,7 +23,6 @@ module.exports = class WsClient extends Client {
         } else {
             this.connection = new WebSocket (this.url, this.protocols)
         }
-        this.connection.binaryType = 'arraybuffer';
 
         this.connection.onopen = this.onOpen.bind (this)
         this.connection.onmessage = this.onMessage.bind (this)
