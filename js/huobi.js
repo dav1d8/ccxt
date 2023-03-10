@@ -2756,18 +2756,20 @@ module.exports = class huobi extends Exchange {
                 type = 'margin';
             }
         }
-        for (let i = 0; i < accounts.length; i++) {
-            const account = accounts[i];
-            const marketId = this.marketId (symbol);
-            const info = this.safeValue (account, 'info');
-            const subtype = this.safeString (info, 'subtype', undefined);
-            const typeFromAccount = this.safeString (account, 'type');
-            if (type === 'margin') {
-                if (subtype === marketId) {
-                    return this.safeString (account, 'id');
+        if (symbol !== undefined) {
+            const marketId = this.marketId(symbol);
+            for (let i = 0; i < accounts.length; i++) {
+                const account = accounts[i];
+                const info = this.safeValue(account, 'info');
+                const subtype = this.safeString(info, 'subtype', undefined);
+                const typeFromAccount = this.safeString(account, 'type');
+                if (type === 'margin') {
+                    if (subtype === marketId) {
+                        return this.safeString(account, 'id');
+                    }
+                } else if (type === typeFromAccount) {
+                    return this.safeString(account, 'id');
                 }
-            } else if (type === typeFromAccount) {
-                return this.safeString (account, 'id');
             }
         }
         const defaultAccount = this.safeValue (accounts, 0, {});
