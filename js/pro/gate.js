@@ -80,7 +80,7 @@ module.exports = class gate extends gateRest {
         });
     }
 
-    async watchOrderBook (symbol, limit = undefined, params = {}) {
+    async watchOrderBook (symbol, limit = undefined, params = {}, callback = undefined) {
         /**
          * @method
          * @name gate#watchOrderBook
@@ -116,6 +116,7 @@ module.exports = class gate extends gateRest {
             'method': this.handleOrderBookSubscription,
             'symbol': symbol,
             'limit': limit,
+            'callback': callback,
         };
         const orderbook = await this.subscribePublic (url, method, messageHash, payload, subscriptionParams);
         return orderbook.limit ();

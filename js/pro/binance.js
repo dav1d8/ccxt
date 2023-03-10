@@ -113,7 +113,7 @@ module.exports = class binance extends binanceRest {
         super.onClose (client, error);
     }
 
-    async watchOrderBook (symbol, limit = undefined, params = {}) {
+    async watchOrderBook (symbol, limit = undefined, params = {}, callback = undefined) {
         /**
          * @method
          * @name binance#watchOrderBook
@@ -192,6 +192,7 @@ module.exports = class binance extends binanceRest {
             'limit': limit,
             'type': type,
             'params': params,
+            'callback': callback,
         };
         const message = this.extend (request, query);
         // 1. Open a stream to wss://stream.binance.com:9443/ws/bnbbtc@depth.

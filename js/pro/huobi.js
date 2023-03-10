@@ -312,7 +312,7 @@ module.exports = class huobi extends huobiRest {
         client.resolve (stored, ch);
     }
 
-    async watchOrderBook (symbol, limit = undefined, params = {}) {
+    async watchOrderBook (symbol, limit = undefined, params = {}, callback = undefined) {
         /**
          * @method
          * @name huobi#watchOrderBook
@@ -349,7 +349,7 @@ module.exports = class huobi extends huobiRest {
             params['data_type'] = 'incremental';
             method = undefined;
         }
-        const orderbook = await this.subscribePublic (url, symbol, messageHash, method, params);
+        const orderbook = await this.subscribePublic (url, symbol, messageHash, method, params, callback);
         return orderbook.limit ();
     }
 
@@ -2031,7 +2031,7 @@ module.exports = class huobi extends huobiRest {
         return url;
     }
 
-    async subscribePublic (url, symbol, messageHash, method = undefined, params = {}) {
+    async subscribePublic (url, symbol, messageHash, method = undefined, params = {}, callback = undefined) {
         const requestId = this.requestId ();
         const request = {
             'sub': messageHash,
@@ -2042,6 +2042,7 @@ module.exports = class huobi extends huobiRest {
             'messageHash': messageHash,
             'symbol': symbol,
             'params': params,
+            'callback': callback,
         };
         if (method !== undefined) {
             subscription['method'] = method;

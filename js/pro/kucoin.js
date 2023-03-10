@@ -89,7 +89,7 @@ module.exports = class kucoin extends kucoinRest {
         return requestId;
     }
 
-    async subscribe (negotiation, topic, messageHash, method, symbol, params = {}) {
+    async subscribe (negotiation, topic, messageHash, method, symbol, params = {}, callback = undefined) {
         await this.loadMarkets ();
         // const market = this.market (symbol);
         const data = this.safeValue (negotiation, 'data', {});
@@ -118,6 +118,7 @@ module.exports = class kucoin extends kucoinRest {
             'topic': topic,
             'messageHash': messageHash,
             'method': method,
+            'callback': callback,
         };
         const request = this.extend (subscribe, params);
         const subscriptionHash = topic;
@@ -346,7 +347,7 @@ module.exports = class kucoin extends kucoinRest {
         return message;
     }
 
-    async watchOrderBook (symbol, limit = undefined, params = {}) {
+    async watchOrderBook (symbol, limit = undefined, params = {}, callback = undefined) {
         await this.loadMarkets ();
         limit = 50;
         const negotiation = await this.negotiate ();
@@ -354,7 +355,7 @@ module.exports = class kucoin extends kucoinRest {
         symbol = market['symbol'];
         const topic = '/spotMarket/level2Depth50:' + market['id'];
         const messageHash = topic;
-        const orderbook = await this.subscribe (negotiation, topic, messageHash, this.handleOrderBookSubscription, symbol, params);
+        const orderbook = await this.subscribe (negotiation, topic, messageHash, this.handleOrderBookSubscription, symbol, params, callback);
         return orderbook.limit (limit);
     }
 
