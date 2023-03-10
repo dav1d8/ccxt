@@ -690,7 +690,7 @@ declare module 'ccxt' {
     class ExchangePro extends Exchange {
         watchTicker (symbol: string, params?: Params): Promise<Ticker>;
         watchTickers (symbols?: string[], params?: Params): Promise<Dictionary<Ticker>>;
-        watchOrderBook (symbol: string, limit?: number, params?: Params): Promise<OrderBook>;
+        watchOrderBook (symbol: string, limit?: number, params?: Params, callback?: (orderBook: OrderBook) => void): Promise<OrderBook>;
         watchOHLCV (symbol: string, timeframe?: string, since?: number, limit?: number, params?: Params): Promise<OHLCV[]>;
         watchTrades (symbol: string, since?: number, limit?: number, params?: Params): Promise<Trade[]>;
         watchBalance (params?: Params): Promise<Balances>;

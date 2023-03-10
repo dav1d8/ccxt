@@ -126,7 +126,7 @@ module.exports = class Exchange extends BaseExchange {
         //                                 |               |
         //                             subscribe -----→ receive
         //
-        const future = client.future (messageHash);
+        const future = client.future (messageHash, subscription.callback);
         // we intentionally do not use await here to avoid unhandled exceptions
         // the policy is to make sure that 100% of promises are resolved or rejected
         // either with a call to client.resolve or client.reject with

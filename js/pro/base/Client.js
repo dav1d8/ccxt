@@ -41,6 +41,7 @@ module.exports = class Client {
             protocols: undefined, // ws-specific protocols
             options: undefined, // ws-specific options
             futures: {},
+            callbacks: {},
             subscriptions: {},
             rejections: {}, // so that we can reject things in the future
             connected: undefined, // connection-related Future
@@ -67,14 +68,21 @@ module.exports = class Client {
         this.connected = Future ()
     }
 
-    future (messageHash) {
+    future (messageHash, callback) {
         if (!(messageHash in this.futures)) {
             this.futures[messageHash] = Future ()
+            if (callback !== undefined) {
+                if (this.callbacks[messageHash] === undefined) {
+                    this.callbacks[messageHash] = []
+                }
+                this.callbacks[messageHash].push(callback)
+            }
         }
         const future = this.futures[messageHash]
         if (messageHash in this.rejections) {
             future.reject (this.rejections[messageHash])
             delete this.rejections[messageHash]
+            delete this.callbacks[messageHash]
         }
         return future
     }
@@ -83,16 +91,26 @@ module.exports = class Client {
         if (this.verbose && (messageHash === undefined)) {
             this.log (new Date (), 'resolve received undefined messageHash');
         }
-        if (messageHash in this.futures) {
-            const promise = this.futures[messageHash]
-            promise.resolve (result)
-            delete this.futures[messageHash]
+        if (messageHash in this.callbacks) {
+            const callbackList = this.callbacks[messageHash]
+            for (let i = 0; i < callbackList.length; i++) {
+                callbackList[i](result)
+            }
+        } else {
+            if (messageHash in this.futures) {
+                const promise = this.futures[messageHash]
+                promise.resolve (result)
+                delete this.futures[messageHash]
+            }
         }
         return result
     }
 
     reject (result, messageHash = undefined) {
         if (messageHash) {
+            if (messageHash in this.callbacks) {
+                delete this.callbacks[messageHash]
+            }
             if (messageHash in this.futures) {
                 const promise = this.futures[messageHash]
                 promise.reject (result)
