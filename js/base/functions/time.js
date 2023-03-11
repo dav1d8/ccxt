@@ -55,22 +55,23 @@ class TimedOut extends Error {
 }
 
 const iso8601 = (timestamp) => {
-    let _timestampNumber = undefined;
-    if (typeof timestamp === 'number') {
-        _timestampNumber = Math.floor (timestamp);
-    } else {
-        _timestampNumber = parseInt (timestamp, 10);
-    }
-    // undefined, null and lots of nasty non-numeric values yield NaN
-    if (Number.isNaN (_timestampNumber) || _timestampNumber < 0) {
-        return undefined;
-    }
-    // last line of defence
-    try {
-        return new Date (_timestampNumber).toISOString ();
-    } catch (e) {
-        return undefined;
-    }
+    return undefined;
+    // let _timestampNumber = undefined;
+    // if (typeof timestamp === 'number') {
+    //     _timestampNumber = Math.floor (timestamp);
+    // } else {
+    //     _timestampNumber = parseInt (timestamp, 10);
+    // }
+    // // undefined, null and lots of nasty non-numeric values yield NaN
+    // if (Number.isNaN (_timestampNumber) || _timestampNumber < 0) {
+    //     return undefined;
+    // }
+    // // last line of defence
+    // try {
+    //     return new Date (_timestampNumber).toISOString ();
+    // } catch (e) {
+    //     return undefined;
+    // }
 }
 
 const parse8601 = (x) => {
